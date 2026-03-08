@@ -98,7 +98,7 @@ Aucun cookie posé.
 | Refus | Non | Journalier cookieless | ✗ Non | Aucune |
 | Fermeture sans réponse | Non | Journalier cookieless + sendBeacon | ✗ Non | Aucune |
 
-#### Cas particulier — cookie bloqué (v1.2.2)
+#### Cas particulier, le cookie bloqué
 
 Même si le visiteur accepte, son navigateur peut bloquer le cookie (mode navigation privée, ITP Safari, extension bloqueur). Avant v1.2.2, ce cas produisait un UUID fantôme inutilisable.
 
