@@ -4,7 +4,7 @@
 
 **Plugin WordPress d'analytics auto-hébergé, léger et respectueux de la vie privée.**
 
-[![Version](https://img.shields.io/badge/version-1.2.2-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
+[![Version](https://img.shields.io/badge/version-1.2.3-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Licence](https://img.shields.io/badge/licence-GPLv2%2B-blue?style=flat-square)](LICENSE)
