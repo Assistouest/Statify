@@ -63,16 +63,16 @@ Aucun cookie posé.
        ▼
 [Bannière affichée]
        │
-       ├──── Accepte ──────────────────────────────────────────────┐
-       │                                                           │
-       ├──── Refuse ────────────────────────────────────────────┐  │
-       │                                                        │  │
-       └──── Ferme sans répondre ───────────────────────────┐   │  │
-                                                            │   │  │
-                                                            ▼   ▼  │
-                                              Hit pre_consent conservé    │
-                                              = visite cookieless complète│
-                                                                          ▼
+       ├──── Accepte ──────────────────────────────────────────────────────┐
+       │                                                                   │
+       ├──── Refuse ────────────────────────────────────────────┐          │
+       │                                                        │          │
+       └──── Ferme sans répondre ───────────────────────────┐   │          │
+                                                            │   │          │
+                                                            ▼   ▼          │
+                                              Hit pre_consent conservé     │
+                                              = visite cookieless complète │
+                                                                           ▼
                                                             Cookie visitorId créé (182j)
                                                             Hit complet envoyé
                                                             Pre_consent fusionné (is_superseded=1)
