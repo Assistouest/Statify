@@ -1,0 +1,359 @@
+<?php
+/**
+ * Settings view template — Advanced Stats v1.1.0.
+ * Redesigned: card-based layout matching the dashboard style.
+ *
+ * @package AdvStats
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+$options = get_option( 'advstats_options', array() );
+
+// ── Stats rapides pour le panneau maintenance ────────────────────────────────
+global $wpdb;
+$total_hits     = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}advstats_hits" ); // phpcs:ignore
+$total_sessions = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}advstats_sessions" ); // phpcs:ignore
+$total_scroll   = 0;
+if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $wpdb->prefix . 'advstats_scroll' ) ) ) {
+    $total_scroll = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}advstats_scroll" ); // phpcs:ignore
+}
+$total_daily    = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}advstats_daily" ); // phpcs:ignore
+$anon_hits      = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$wpdb->prefix}advstats_hits WHERE visitor_hash LIKE 'anon_%'" ); // phpcs:ignore
+$tracking_mode  = isset( $options['tracking_mode'] ) ? $options['tracking_mode'] : 'cookieless';
+$retention      = isset( $options['retention_days'] ) ? absint( $options['retention_days'] ) : 90;
+?>
+<div class="wrap advstats-wrap">
+
+    <!-- ── Header ──────────────────────────────────────────────────────────── -->
+    <div class="advstats-header">
+        <h1>
+            <img src="<?php echo esc_url( ADVSTATS_PLUGIN_URL . 'Statify.svg' ); ?>"
+                 alt="Statify" style="width:32px;height:32px;vertical-align:middle;">
+            <?php esc_html_e( 'Statify — Réglages', 'adv-stats' ); ?>
+        </h1>
+        <div class="advstats-header-actions">
+            <span style="font-size:12px;color:var(--advstats-text-secondary);">v<?php echo esc_html( ADVSTATS_VERSION ); ?></span>
+        </div>
+    </div>
+
+    <form method="post" action="options.php" id="advstats-settings-form">
+        <?php settings_fields( 'advstats_settings' ); ?>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- RGPD STATUS BANNER                                               -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <div class="advstats-card" style="border-left:4px solid var(--advstats-primary);margin-bottom:24px;">
+            <div class="advstats-card-body" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+                <div style="font-size:32px;">🛡️</div>
+                <div style="flex:1;min-width:240px;">
+                    <div style="font-size:15px;font-weight:700;color:var(--advstats-text);margin-bottom:4px;">
+                        <?php esc_html_e( 'Statut RGPD', 'adv-stats' ); ?>
+                    </div>
+                    <div style="font-size:13px;color:var(--advstats-text-secondary);line-height:1.5;">
+                        <?php if ( 'cookie' === $tracking_mode ) : ?>
+                            <?php esc_html_e( 'Mode cookie actif — le consentement est requis pour le tracking.', 'adv-stats' ); ?>
+                        <?php else : ?>
+                            <?php esc_html_e( 'Mode sans cookie — identification par hash journalier (IP+UA). Exemption CNIL possible pour mesure d\'audience.', 'adv-stats' ); ?>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                    <div style="background:<?php echo ! empty( $options['anonymize_ip'] ) ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)'; ?>;padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:<?php echo ! empty( $options['anonymize_ip'] ) ? 'var(--advstats-success)' : 'var(--advstats-danger)'; ?>;">
+                        <?php echo ! empty( $options['anonymize_ip'] ) ? '✅ ' : '⚠️ '; ?>
+                        <?php esc_html_e( 'IP anonymisée', 'adv-stats' ); ?>
+                    </div>
+                    <div style="background:rgba(108,99,255,0.1);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--advstats-primary);">
+                        🗓️ <?php echo 0 === $retention ? esc_html__( 'Rétention illimitée', 'adv-stats' ) : sprintf( esc_html__( 'Rétention %d jours', 'adv-stats' ), $retention ); ?>
+                    </div>
+                    <div style="background:rgba(16,185,129,0.1);padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;color:var(--advstats-success);">
+                        🔒 <?php esc_html_e( 'Anonymisation auto', 'adv-stats' ); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- TRACKING                                                          -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <div class="advstats-card" style="margin-bottom:24px;">
+            <div class="advstats-card-header">
+                <h2>📊 <?php esc_html_e( 'Tracking', 'adv-stats' ); ?></h2>
+            </div>
+            <div class="advstats-card-body">
+                <?php do_settings_fields( 'advstats-settings', 'advstats_general' ); ?>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- CONFIDENTIALITÉ & RGPD                                            -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <div class="advstats-card" style="margin-bottom:24px;border-left:4px solid var(--advstats-success);">
+            <div class="advstats-card-header">
+                <h2>🔐 <?php esc_html_e( 'Confidentialité & RGPD', 'adv-stats' ); ?></h2>
+            </div>
+            <div class="advstats-card-body">
+                <?php do_settings_fields( 'advstats-settings', 'advstats_privacy' ); ?>
+
+                <div style="margin-top:20px;padding:16px;background:#f0fdf4;border-radius:8px;border:1px solid #bbf7d0;">
+                    <div style="font-size:13px;font-weight:600;color:#166534;margin-bottom:6px;">
+                        💡 <?php esc_html_e( 'Comment fonctionne l\'anonymisation', 'adv-stats' ); ?>
+                    </div>
+                    <div style="font-size:12px;color:#15803d;line-height:1.6;">
+                        <?php esc_html_e( 'Après la période de rétention, les données ne sont PAS supprimées — elles sont anonymisées. Le visitor_hash est remplacé par un hash aléatoire, le user_id est effacé, le referrer est réduit au domaine. Les métriques statistiques (durée, scroll, device, page) sont conservées indéfiniment. Les comptages (UV, sessions) sont figés dans les agrégats journaliers AVANT anonymisation.', 'adv-stats' ); ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- CONSENTEMENT                                                      -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <div class="advstats-card" style="margin-bottom:24px;">
+            <div class="advstats-card-header">
+                <h2>✋ <?php esc_html_e( 'Bannière de consentement', 'adv-stats' ); ?></h2>
+                <?php if ( 'cookieless' === $tracking_mode ) : ?>
+                    <span style="background:rgba(245,158,11,0.1);color:#b45309;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600;">
+                        <?php esc_html_e( 'Mode sans cookie — bannière optionnelle', 'adv-stats' ); ?>
+                    </span>
+                <?php else : ?>
+                    <span style="background:rgba(239,68,68,0.1);color:#dc2626;padding:4px 12px;border-radius:16px;font-size:11px;font-weight:600;">
+                        <?php esc_html_e( 'Mode cookie — bannière recommandée', 'adv-stats' ); ?>
+                    </span>
+                <?php endif; ?>
+            </div>
+            <div class="advstats-card-body">
+                <?php do_settings_fields( 'advstats-settings', 'advstats_consent' ); ?>
+            </div>
+        </div>
+
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <!-- GÉOLOCALISATION                                                   -->
+        <!-- ══════════════════════════════════════════════════════════════════ -->
+        <div class="advstats-grid" style="margin-bottom:24px;">
+            <div class="advstats-card">
+                <div class="advstats-card-header">
+                    <h2>🌍 <?php esc_html_e( 'Géolocalisation', 'adv-stats' ); ?></h2>
+                </div>
+                <div class="advstats-card-body">
+                    <?php do_settings_fields( 'advstats-settings', 'advstats_geo' ); ?>
+                </div>
+            </div>
+
+            <!-- PERFORMANCE -->
+            <div class="advstats-card">
+                <div class="advstats-card-header">
+                    <h2>⚡ <?php esc_html_e( 'Performance & Filtrage', 'adv-stats' ); ?></h2>
+                </div>
+                <div class="advstats-card-body">
+                    <?php do_settings_fields( 'advstats-settings', 'advstats_perf' ); ?>
+                    <?php do_settings_fields( 'advstats-settings', 'advstats_export' ); ?>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVE BUTTON -->
+        <div style="margin-bottom:24px;">
+            <?php submit_button( __( 'Enregistrer les réglages', 'adv-stats' ), 'primary large', 'submit', false, array( 'style' => 'background:var(--advstats-primary);border-color:var(--advstats-primary-dark);border-radius:8px;padding:8px 32px;font-size:14px;' ) ); ?>
+        </div>
+    </form>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- MAINTENANCE DES DONNÉES                                           -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="advstats-card" style="margin-bottom:24px;">
+        <div class="advstats-card-header">
+            <h2>🗄️ <?php esc_html_e( 'Données en base', 'adv-stats' ); ?></h2>
+        </div>
+        <div class="advstats-card-body">
+            <div class="advstats-kpis" style="margin-bottom:20px;">
+                <div class="advstats-kpi-card" style="padding:16px;">
+                    <div class="advstats-kpi-value" style="font-size:24px;"><?php echo esc_html( number_format_i18n( $total_hits ) ); ?></div>
+                    <div class="advstats-kpi-label"><?php esc_html_e( 'Hits', 'adv-stats' ); ?></div>
+                </div>
+                <div class="advstats-kpi-card" style="padding:16px;">
+                    <div class="advstats-kpi-value" style="font-size:24px;"><?php echo esc_html( number_format_i18n( $total_sessions ) ); ?></div>
+                    <div class="advstats-kpi-label"><?php esc_html_e( 'Sessions', 'adv-stats' ); ?></div>
+                </div>
+                <div class="advstats-kpi-card" style="padding:16px;">
+                    <div class="advstats-kpi-value" style="font-size:24px;"><?php echo esc_html( number_format_i18n( $total_scroll ) ); ?></div>
+                    <div class="advstats-kpi-label"><?php esc_html_e( 'Scroll events', 'adv-stats' ); ?></div>
+                </div>
+                <div class="advstats-kpi-card" style="padding:16px;">
+                    <div class="advstats-kpi-value" style="font-size:24px;"><?php echo esc_html( number_format_i18n( $total_daily ) ); ?></div>
+                    <div class="advstats-kpi-label"><?php esc_html_e( 'Agrégats journaliers', 'adv-stats' ); ?></div>
+                </div>
+                <div class="advstats-kpi-card" style="padding:16px;">
+                    <div class="advstats-kpi-value" style="font-size:24px;color:var(--advstats-success);"><?php echo esc_html( number_format_i18n( $anon_hits ) ); ?></div>
+                    <div class="advstats-kpi-label"><?php esc_html_e( 'Hits anonymisés', 'adv-stats' ); ?></div>
+                </div>
+            </div>
+
+            <?php if ( $anon_hits > 0 ) : ?>
+            <div style="padding:12px 16px;background:#f0fdf4;border-radius:8px;margin-bottom:16px;font-size:12px;color:#166534;border:1px solid #bbf7d0;">
+                ✅ <?php printf( esc_html__( '%s hits ont été anonymisés. Leurs statistiques sont conservées mais ne sont plus liables à un individu.', 'adv-stats' ), '<strong>' . esc_html( number_format_i18n( $anon_hits ) ) . '</strong>' ); ?>
+            </div>
+            <?php endif; ?>
+
+            <div style="display:flex;gap:12px;flex-wrap:wrap;">
+                <button id="advstats-purge-btn" class="button button-secondary"
+                        onclick="return confirm('<?php esc_attr_e( 'Cela va anonymiser les données plus anciennes que la période de rétention et consolider les agrégats. Continuer ?', 'adv-stats' ); ?>');"
+                        style="border-radius:8px;">
+                    🔄 <?php esc_html_e( 'Lancer l\'anonymisation maintenant', 'adv-stats' ); ?>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <!-- RGPD INFO PANEL                                                   -->
+    <!-- ══════════════════════════════════════════════════════════════════ -->
+    <div class="advstats-card" style="margin-bottom:24px;">
+        <div class="advstats-card-header">
+            <h2>📋 <?php esc_html_e( 'Conformité RGPD — Checklist', 'adv-stats' ); ?></h2>
+        </div>
+        <div class="advstats-card-body" style="padding:0;">
+            <table class="advstats-full-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px;"></th>
+                        <th><?php esc_html_e( 'Exigence', 'adv-stats' ); ?></th>
+                        <th><?php esc_html_e( 'Statut', 'adv-stats' ); ?></th>
+                        <th><?php esc_html_e( 'Détail', 'adv-stats' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'IP non stockée', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Conforme', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'L\'IP est utilisée en mémoire pour le hash et la géoloc, jamais écrite en base.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;"><?php echo ! empty( $options['anonymize_ip'] ) ? '✅' : '⚠️'; ?></td>
+                        <td><strong><?php esc_html_e( 'Anonymisation IP', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:<?php echo ! empty( $options['anonymize_ip'] ) ? 'rgba(16,185,129,0.1);color:#059669' : 'rgba(245,158,11,0.1);color:#b45309'; ?>;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php echo ! empty( $options['anonymize_ip'] ) ? esc_html__( 'Activé', 'adv-stats' ) : esc_html__( 'Désactivé', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'Tronque le dernier octet IPv4 avant le hachage et la géoloc.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'Hash non réversible', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Conforme', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'SHA-256 irréversible. Pas de table de correspondance hash → identité.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'Rétention configurable', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(108,99,255,0.1);color:var(--advstats-primary);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php echo 0 === $retention ? esc_html__( 'Illimité', 'adv-stats' ) : esc_html( $retention . 'j' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'Données brutes anonymisées après la période. Agrégats conservés.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'Export / Effacement WordPress', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Conforme', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'Outils → Exporter/Effacer les données personnelles. Hits + Sessions + Scroll.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'Politique de confidentialité', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Conforme', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'Texte suggéré dans Réglages → Confidentialité. Vérifiez qu\'il est intégré.', 'adv-stats' ); ?></td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;"><?php echo ( 'cookie' === $tracking_mode && ! empty( $options['consent_enabled'] ) ) || 'cookieless' === $tracking_mode ? '✅' : '⚠️'; ?></td>
+                        <td><strong><?php esc_html_e( 'Consentement', 'adv-stats' ); ?></strong></td>
+                        <td>
+                            <?php if ( 'cookie' === $tracking_mode && empty( $options['consent_enabled'] ) ) : ?>
+                                <span style="background:rgba(239,68,68,0.1);color:#dc2626;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Requis !', 'adv-stats' ); ?></span>
+                            <?php elseif ( 'cookie' === $tracking_mode ) : ?>
+                                <span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Bannière active', 'adv-stats' ); ?></span>
+                            <?php else : ?>
+                                <span style="background:rgba(108,99,255,0.1);color:var(--advstats-primary);padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'Exemption CNIL', 'adv-stats' ); ?></span>
+                            <?php endif; ?>
+                        </td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);">
+                            <?php if ( 'cookie' === $tracking_mode && empty( $options['consent_enabled'] ) ) : ?>
+                                <?php esc_html_e( '⚠️ Mode cookie actif SANS bannière de consentement. Activez-la ci-dessus.', 'adv-stats' ); ?>
+                            <?php elseif ( 'cookieless' === $tracking_mode ) : ?>
+                                <?php esc_html_e( 'Pas de cookie déposé. Hash journalier éligible à l\'exemption CNIL mesure d\'audience.', 'adv-stats' ); ?>
+                            <?php else : ?>
+                                <?php esc_html_e( 'Tracking bloqué tant que le visiteur n\'a pas accepté.', 'adv-stats' ); ?>
+                            <?php endif; ?>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-size:18px;text-align:center;">✅</td>
+                        <td><strong><?php esc_html_e( 'Durée des cookies', 'adv-stats' ); ?></strong></td>
+                        <td><span style="background:rgba(16,185,129,0.1);color:#059669;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;"><?php esc_html_e( 'CNIL OK', 'adv-stats' ); ?></span></td>
+                        <td style="font-size:12px;color:var(--advstats-text-secondary);"><?php esc_html_e( 'Visiteur : 13 mois. Consentement : 6 mois. Conforme aux recommandations CNIL.', 'adv-stats' ); ?></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ── Footer ──────────────────────────────────────────────────────────── -->
+    <div class="advstats-footer">
+        <p>
+            Statify v<?php echo esc_html( ADVSTATS_VERSION ); ?>
+            ·
+            <a href="<?php echo esc_url( admin_url( 'admin.php?page=advstats' ) ); ?>">
+                <?php esc_html_e( 'Dashboard', 'adv-stats' ); ?>
+            </a>
+            ·
+            <a href="<?php echo esc_url( admin_url( 'options-privacy.php' ) ); ?>">
+                <?php esc_html_e( 'Politique de confidentialité', 'adv-stats' ); ?>
+            </a>
+        </p>
+    </div>
+</div>
+
+<style>
+/* Settings form inside cards — override WP defaults */
+.advstats-card .form-table { margin: 0; }
+.advstats-card .form-table th {
+    padding: 14px 12px 14px 0;
+    font-weight: 600;
+    font-size: 13px;
+    color: var(--advstats-text);
+    vertical-align: top;
+    width: 200px;
+}
+.advstats-card .form-table td {
+    padding: 14px 0;
+    font-size: 13px;
+}
+.advstats-card .form-table td p.description {
+    font-size: 12px;
+    color: var(--advstats-text-secondary);
+    margin-top: 4px;
+}
+.advstats-card .form-table input[type="text"],
+.advstats-card .form-table input[type="number"],
+.advstats-card .form-table textarea,
+.advstats-card .form-table select {
+    border-radius: 8px;
+    border: 1px solid var(--advstats-border);
+    padding: 6px 12px;
+    font-size: 13px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.advstats-card .form-table input:focus,
+.advstats-card .form-table select:focus,
+.advstats-card .form-table textarea:focus {
+    border-color: var(--advstats-primary);
+    box-shadow: 0 0 0 2px rgba(108, 99, 255, 0.15);
+    outline: none;
+}
+.advstats-card .form-table input[type="checkbox"],
+.advstats-card .form-table input[type="radio"] {
+    accent-color: var(--advstats-primary);
+}
+.advstats-card .form-table fieldset label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+}
+</style>
