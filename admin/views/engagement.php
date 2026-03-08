@@ -108,25 +108,27 @@ $back_url = admin_url( 'admin.php?page=statify' );
     <div class="statify-card">
         <div class="statify-card-header">
             <h2>Score d'engagement par page</h2>
-            <span class="statify-badge-limit" title="Score calculé sur : durée (40%), scroll (35%), taux d'engagement (25%)">
-                ℹ️ Score /100
-            </span>
         </div>
         <div class="statify-card-body" style="padding:0;">
             <table class="statify-full-table" id="eng-pages-table">
                 <thead>
                     <tr>
-                        <th style="width:35%">Page</th>
-                        <th style="text-align:center">Score</th>
-                        <th style="text-align:right">Sessions</th>
-                        <th style="text-align:right">Durée moy.</th>
-                        <th style="text-align:right">Scroll moy.</th>
-                        <th style="text-align:right">Engagement</th>
-                        <th style="text-align:right">Vues</th>
+                        <th style="width:30%">Page</th>
+                        <th style="width:100px;text-align:center">Score</th>
+                        <th>
+                            <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.4px;padding:0 4px;">
+                                <span title="Durée moyenne sur cette page (signal 22%)">🕒 Durée moy.</span>
+                                <span title="Scroll depth moyen (signal 20%)">⬇ Scroll moy.</span>
+                                <span title="% sessions engagées (signal 20%)">✅ Engagement</span>
+                                <span title="% visiteurs revenus (signal 18%)">🔁 Retour</span>
+                                <span title="Pages/session depuis cette page (signal 12%)">📄 Profondeur</span>
+                                <span title="Nombre de sessions · fiabilité statistique (signal 8%)">📊 Sessions</span>
+                            </div>
+                        </th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td colspan="7" class="statify-no-data">Chargement…</td></tr>
+                    <tr><td colspan="3" class="statify-no-data">Chargement…</td></tr>
                 </tbody>
             </table>
         </div>
@@ -415,48 +417,86 @@ $back_url = admin_url( 'admin.php?page=statify' );
         if (!tbody) return;
 
         if (!data || !data.length) {
-            tbody.innerHTML = '<tr><td colspan="7" class="statify-no-data">Aucune donnée pour cette période</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" class="statify-no-data">Aucune donnée pour cette période</td></tr>';
             return;
         }
 
         tbody.innerHTML = data.map(function (p, idx) {
-            var score   = parseFloat(p.engagement_score || 0);
+            var score      = parseFloat(p.engagement_score || 0);
+            var sig        = p.score_signals || {};
             var scoreColor = score >= 70 ? '#10b981' : score >= 40 ? '#f59e0b' : '#ef4444';
             var scoreBg    = score >= 70 ? 'rgba(16,185,129,0.1)' : score >= 40 ? 'rgba(245,158,11,0.1)' : 'rgba(239,68,68,0.1)';
             var title      = p.page_title || p.page_url || '—';
-            var engRate    = p.total_sessions > 0
-                ? Math.round((p.engaged_sessions / p.total_sessions) * 100) + '%'
-                : '—';
-            var scrollDisp = p.avg_scroll ? parseFloat(p.avg_scroll).toFixed(0) + '%' : '—';
-            var medal = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
+            var medal      = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
+
+            // Définition des 6 signaux avec leur valeur brute formatée
+            var signals = [
+                {
+                    score: parseFloat((sig.duration  || {}).score || 0),
+                    label: fmtDur(p.avg_duration || 0),
+                    title: 'Durée moyenne · signal ' + parseFloat((sig.duration  || {}).score || 0).toFixed(0) + '/100 (poids 22%)'
+                },
+                {
+                    score: parseFloat((sig.scroll    || {}).score || 0),
+                    label: (sig.scroll && (sig.scroll.raw || sig.scroll.raw === 0)) ? sig.scroll.raw + '%' : '—',
+                    title: 'Scroll moyen · signal ' + parseFloat((sig.scroll    || {}).score || 0).toFixed(0) + '/100 (poids 20%)'
+                },
+                {
+                    score: parseFloat((sig.engagement|| {}).score || 0),
+                    label: (sig.engagement && sig.engagement.raw !== null && sig.engagement.raw !== undefined) ? sig.engagement.raw + '%' : '—',
+                    title: 'Sessions engagées · signal ' + parseFloat((sig.engagement|| {}).score || 0).toFixed(0) + '/100 (poids 20%)'
+                },
+                {
+                    score: parseFloat((sig['return'] || {}).score || 0),
+                    label: (sig['return'] && (sig['return'].raw || sig['return'].raw === 0)) ? sig['return'].raw + '%' : '—',
+                    title: 'Visiteurs de retour · signal ' + parseFloat((sig['return'] || {}).score || 0).toFixed(0) + '/100 (poids 18%)'
+                },
+                {
+                    score: parseFloat((sig.depth     || {}).score || 0),
+                    label: (sig.depth && sig.depth.raw > 0) ? sig.depth.raw + ' p.' : '—',
+                    title: 'Pages par session (depuis cette page) · signal ' + parseFloat((sig.depth     || {}).score || 0).toFixed(0) + '/100 (poids 12%)'
+                },
+                {
+                    score: parseFloat((sig.confidence|| {}).score || 0),
+                    label: fmt(p.total_sessions) + ' sess.',
+                    title: 'Fiabilité statistique · ' + fmt(p.total_sessions) + ' sessions · signal ' + parseFloat((sig.confidence|| {}).score || 0).toFixed(0) + '/100 (poids 8%)'
+                },
+            ];
+
+            // Grille 6 signaux : barre de score + valeur brute lisible
+            var signalGrid = '<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 4px;">'
+                + signals.map(function(s) {
+                    var v        = s.score;
+                    var barColor = v >= 70 ? '#10b981' : v >= 40 ? '#f59e0b' : '#ef4444';
+                    var barW     = Math.round(v);
+                    return '<div style="display:flex;flex-direction:column;gap:3px;" title="' + s.title + '">'
+                        + '<div style="background:#f1f5f9;border-radius:3px;height:5px;overflow:hidden;">'
+                        +   '<div style="width:' + barW + '%;height:100%;background:' + barColor + ';border-radius:3px;"></div>'
+                        + '</div>'
+                        + '<div style="font-size:11px;font-weight:600;color:#374151;">' + s.label + '</div>'
+                        + '</div>';
+                }).join('')
+                + '</div>';
 
             return '<tr>'
-                + '<td>'
-                +   '<div style="font-size:13px;font-weight:600;color:#1d2327;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;" title="' + esc(p.page_url) + '">'
+                // Col 1 : Page
+                + '<td style="vertical-align:middle;">'
+                +   '<div style="font-size:13px;font-weight:600;color:#1d2327;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;" title="' + esc(p.page_url) + '">'
                 +   medal + esc(title)
                 +   '</div>'
-                +   '<div style="font-size:11px;color:#9ca3af;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:300px;">' + esc(p.page_url) + '</div>'
+                +   '<div style="font-size:11px;color:#9ca3af;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px;">' + esc(p.page_url) + '</div>'
+                +   '<div style="font-size:11px;color:#b0b8c1;margin-top:1px;">' + fmt(p.page_views) + ' vues</div>'
                 + '</td>'
-                + '<td style="text-align:center;">'
-                +   '<span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:' + scoreBg + ';color:' + scoreColor + ';font-weight:800;font-size:14px;">'
+                // Col 2 : Score
+                + '<td style="text-align:center;vertical-align:middle;width:90px;">'
+                +   '<span style="display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:' + scoreBg + ';color:' + scoreColor + ';font-weight:800;font-size:16px;">'
                 +   score.toFixed(0)
                 +   '</span>'
-                +   '<div style="height:4px;background:#f0f2f5;border-radius:2px;margin-top:6px;width:60px;margin-left:auto;margin-right:auto;">'
-                +   '<div style="height:100%;width:' + score + '%;background:' + scoreColor + ';border-radius:2px;"></div>'
-                +   '</div>'
                 + '</td>'
-                + '<td style="text-align:right;">' + fmt(p.total_sessions) + '</td>'
-                + '<td style="text-align:right;">' + fmtDur(p.avg_duration || 0) + '</td>'
-                + '<td style="text-align:right;">'
-                +   '<div style="display:flex;align-items:center;justify-content:flex-end;gap:6px;">'
-                +   scrollDisp
-                +   (p.avg_scroll ? '<div style="width:40px;height:5px;background:#f0f2f5;border-radius:2px;overflow:hidden;"><div style="width:' + parseFloat(p.avg_scroll) + '%;height:100%;background:#6c63ff;border-radius:2px;"></div></div>' : '')
-                +   '</div>'
+                // Col 3 : Grille 6 signaux
+                + '<td style="vertical-align:middle;padding-top:10px;padding-bottom:10px;">'
+                +   signalGrid
                 + '</td>'
-                + '<td style="text-align:right;">'
-                +   '<span style="font-weight:600;color:' + (parseInt(engRate) >= 50 ? '#10b981' : '#f59e0b') + ';">' + engRate + '</span>'
-                + '</td>'
-                + '<td style="text-align:right;color:#646970;">' + fmt(p.page_views) + '</td>'
                 + '</tr>';
         }).join('');
     }

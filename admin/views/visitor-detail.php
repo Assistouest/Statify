@@ -32,12 +32,15 @@ if ( ! $session ) {
     return;
 }
 
-// Fetch Hits for this session, chronological order
+// Fetch Hits for this session, chronological order — exclut les hits superseded
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $hits = $wpdb->get_results( $wpdb->prepare(
-    "SELECT * FROM {$t_hits} WHERE session_id = %s ORDER BY hit_at ASC",
+    "SELECT * FROM {$t_hits} WHERE session_id = %s AND is_superseded = 0 ORDER BY hit_at ASC",
     $session_id
 ) );
+
+// Offset du fuseau horaire du site pour convertir hit_at (UTC) en heure locale
+$tz_offset_seconds = (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
 
 // Reusable function to calculate time ago
 function statify_time_ago( $datetime ) {
@@ -102,7 +105,7 @@ function statify_time_ago( $datetime ) {
                         <div style="position:absolute;left:-29px;top:4px;width:16px;height:16px;border-radius:50%;background:#ffffff;border:3px solid #6c63ff;"></div>
                         
                         <div style="color:#64748b;font-size:13px;margin-bottom:4px;">
-                            <?php echo esc_html( gmdate( 'H:i:s', strtotime( $hit->hit_at ) ) ); ?>
+                            <?php echo esc_html( gmdate( 'H:i:s', strtotime( $hit->hit_at ) + $tz_offset_seconds ) ); ?>
                         </div>
                         
                         <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:6px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,0.05);">

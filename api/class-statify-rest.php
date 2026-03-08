@@ -342,19 +342,28 @@ class Statify_Rest {
 
         $sess_args = array( $params['from_utc'], $params['to_utc'] );
 
-        // Préfère engagement_time (temps page visible) quand disponible,
-        // sinon tombe sur duration (durée serveur classique).
-        // Sessions à 0s (visiteurs non-traçables) exclues des moyennes — comptées en pages vues uniquement.
+        // Durée et engagement filtrés via les sessions liées aux hits de la période
+        // (JOIN sur statify_hits pour rester cohérent avec le filtre hit_at + is_superseded = 0).
+        // Sessions à 0s (visiteurs non-traçables) exclues des moyennes uniquement.
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $avg_duration = $wpdb->get_var( $wpdb->prepare(
-            "SELECT AVG(CASE WHEN engagement_time > 0 THEN engagement_time WHEN duration > 0 THEN duration ELSE NULL END) FROM {$t_sess} WHERE started_at >= %s AND started_at <= %s AND (duration > 0 OR engagement_time > 0)",
+            "SELECT AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END)
+             FROM {$t_sess} s
+             WHERE s.session_id IN (
+                 SELECT DISTINCT session_id FROM {$table}
+                 WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+             ) AND (s.duration > 0 OR s.engagement_time > 0)",
             ...$sess_args
         ) );
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $engagement = $wpdb->get_row( $wpdb->prepare(
-            "SELECT COUNT(*) as total, SUM(CASE WHEN is_bounce = 0 THEN 1 ELSE 0 END) as engaged
-             FROM {$t_sess} WHERE started_at >= %s AND started_at <= %s AND (duration > 0 OR engagement_time > 0)",
+            "SELECT COUNT(*) as total, SUM(CASE WHEN s.is_bounce = 0 THEN 1 ELSE 0 END) as engaged
+             FROM {$t_sess} s
+             WHERE s.session_id IN (
+                 SELECT DISTINCT session_id FROM {$table}
+                 WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+             ) AND (s.duration > 0 OR s.engagement_time > 0)",
             ...$sess_args
         ) );
 
@@ -610,20 +619,32 @@ class Statify_Rest {
         global $wpdb;
         self::no_cache_headers();
 
-        $params = self::get_date_params( $request );
-        $table  = $wpdb->prefix . 'statify_sessions';
-        $limit  = absint( $request->get_param( 'limit' ) ?: 15 );
+        $params  = self::get_date_params( $request );
+        $t_hits  = $wpdb->prefix . 'statify_hits';
+        $t_sess  = $wpdb->prefix . 'statify_sessions';
+        $limit   = absint( $request->get_param( 'limit' ) ?: 15 );
 
+        // Source primaire : statify_hits (hit_at + is_superseded = 0), identique aux autres endpoints.
+        // On sélectionne les sessions qui ont au moins un hit dans la période demandée,
+        // puis on enrichit avec statify_sessions pour durée/page_count/etc.
         $args  = array( $params['from_utc'], $params['to_utc'] );
-        $where = 'started_at >= %s AND started_at <= %s';
-        if ( ! empty( $params['device'] ) )  { $where .= ' AND device_type = %s';   $args[] = $params['device']; }
-        if ( ! empty( $params['country'] ) ) { $where .= ' AND country_code = %s';  $args[] = $params['country']; }
+        $extra = '';
+        if ( ! empty( $params['device'] ) )  { $extra .= ' AND h.device_type = %s';  $args[] = $params['device']; }
+        if ( ! empty( $params['country'] ) ) { $extra .= ' AND h.country_code = %s'; $args[] = $params['country']; }
         $args[] = $limit;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
         $results = $wpdb->get_results( $wpdb->prepare(
-            "SELECT session_id, visitor_hash, started_at, ended_at, duration, engagement_time, page_count, device_type, country_code
-             FROM {$table} WHERE {$where} ORDER BY ended_at DESC LIMIT %d",
+            "SELECT s.session_id, s.visitor_hash, s.started_at, s.ended_at,
+                    s.duration, s.engagement_time, s.page_count, s.device_type, s.country_code
+             FROM {$t_sess} s
+             INNER JOIN (
+                 SELECT DISTINCT session_id
+                 FROM {$t_hits} h
+                 WHERE h.hit_at >= %s AND h.hit_at <= %s AND h.is_superseded = 0{$extra}
+             ) h ON h.session_id = s.session_id
+             ORDER BY s.ended_at DESC
+             LIMIT %d",
             ...$args
         ) );
 
@@ -747,8 +768,10 @@ class Statify_Rest {
                 "SELECT sr.scroll_depth, COUNT(DISTINCT sr.session_id) AS sessions
                  FROM {$t_scroll} sr
                  INNER JOIN {$t_sess} s ON s.session_id = sr.session_id
-                 WHERE sr.recorded_at >= %s AND sr.recorded_at <= %s
-                   AND (s.duration > 0 OR s.engagement_time > 0)
+                 WHERE sr.session_id IN (
+                     SELECT DISTINCT session_id FROM {$t_hits}
+                     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                 ) AND (s.duration > 0 OR s.engagement_time > 0)
                  GROUP BY sr.scroll_depth",
                 $from, $to
             ) );
@@ -758,17 +781,20 @@ class Statify_Rest {
             }
         }
 
-        // Fallback : depuis max_scroll_depth des sessions
+        // Fallback : depuis max_scroll_depth des sessions — filtre via hits (hit_at + is_superseded = 0)
         if ( $has_sess_table && $has_scroll_col && array_sum( $scroll_map ) === 0 ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $r = $wpdb->get_row( $wpdb->prepare(
                 "SELECT
-                    SUM(CASE WHEN max_scroll_depth >= 25  AND (duration > 0 OR engagement_time > 0) THEN 1 ELSE 0 END) AS s25,
-                    SUM(CASE WHEN max_scroll_depth >= 50  AND (duration > 0 OR engagement_time > 0) THEN 1 ELSE 0 END) AS s50,
-                    SUM(CASE WHEN max_scroll_depth >= 75  AND (duration > 0 OR engagement_time > 0) THEN 1 ELSE 0 END) AS s75,
-                    SUM(CASE WHEN max_scroll_depth >= 100 AND (duration > 0 OR engagement_time > 0) THEN 1 ELSE 0 END) AS s100
-                 FROM {$t_sess}
-                 WHERE started_at >= %s AND started_at <= %s",
+                    SUM(CASE WHEN s.max_scroll_depth >= 25  AND (s.duration > 0 OR s.engagement_time > 0) THEN 1 ELSE 0 END) AS s25,
+                    SUM(CASE WHEN s.max_scroll_depth >= 50  AND (s.duration > 0 OR s.engagement_time > 0) THEN 1 ELSE 0 END) AS s50,
+                    SUM(CASE WHEN s.max_scroll_depth >= 75  AND (s.duration > 0 OR s.engagement_time > 0) THEN 1 ELSE 0 END) AS s75,
+                    SUM(CASE WHEN s.max_scroll_depth >= 100 AND (s.duration > 0 OR s.engagement_time > 0) THEN 1 ELSE 0 END) AS s100
+                 FROM {$t_sess} s
+                 WHERE s.session_id IN (
+                     SELECT DISTINCT session_id FROM {$t_hits}
+                     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                 )",
                 $from, $to
             ) );
             if ( $r ) {
@@ -934,91 +960,111 @@ class Statify_Rest {
             ) );
         }
 
-        // Score /100 : durée 40% + scroll 35% + taux engagement 25%
-        // Source principale = hits (toujours présent), enrichie par sessions et scroll.
+        // ── Clé de regroupement : post_id quand dispo, sinon URL sans query string ──
+        // Cela fusionne automatiquement /page/?index=1, /page/?index=2, etc.
+        $group_key = "CASE WHEN h.post_id > 0 THEN CONCAT('pid:', h.post_id)
+                           ELSE REGEXP_REPLACE(h.page_url, '\\\\?.*$', '')
+                      END";
+
         if ( $has_sess && $has_scroll ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $rows = $wpdb->get_results( $wpdb->prepare(
                 "SELECT
-                    h.page_url,
+                    -- URL canonique : sans paramètres, ou reconstruite depuis post_id
+                    CASE WHEN h.post_id > 0 THEN MIN(REGEXP_REPLACE(h.page_url, '\\\\?.*$', ''))
+                         ELSE REGEXP_REPLACE(h.page_url, '\\\\?.*$', '')
+                    END                             AS page_url,
                     MAX(h.page_title)               AS page_title,
-                    h.post_id,
+                    MAX(h.post_id)                  AS post_id,
                     COUNT(DISTINCT h.session_id)    AS total_sessions,
                     COUNT(*)                        AS page_views,
                     COUNT(DISTINCT h.visitor_hash)  AS unique_visitors,
-                    ROUND(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END)) AS avg_duration,
-                    ROUND(COALESCE(
-                        AVG(CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN sc.max_scroll ELSE NULL END),
-                        AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END)
-                    ), 1)                           AS avg_scroll,
+                    COALESCE(ROUND(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END)), 0) AS avg_duration,
+                    COALESCE(ROUND(AVG(CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN sc.max_scroll ELSE NULL END),1),
+                             ROUND(AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END),1),
+                             0)                     AS avg_scroll,
                     COUNT(DISTINCT CASE WHEN s.is_bounce = 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) AS engaged_sessions,
-                    ROUND(
-                        LEAST(COALESCE(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END), 0), 300) / 300.0 * 40
-                      + COALESCE(AVG(CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN sc.max_scroll ELSE NULL END), AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END), 0) / 100.0 * 35
-                      + CASE WHEN COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) > 0
-                             THEN COUNT(DISTINCT CASE WHEN s.is_bounce = 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) / COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) * 25.0
-                             ELSE 0 END
-                    , 1) AS engagement_score
+                    COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) AS measurable_sessions,
+                    COUNT(DISTINCT CASE WHEN rv.visit_count > 1 THEN h.visitor_hash END) AS returning_visitors,
+                    COALESCE(ROUND(AVG(CASE WHEN REGEXP_REPLACE(h.page_url,'\\\\?.*$','') = REGEXP_REPLACE(s.entry_page,'\\\\?.*$','') AND s.page_count > 0 THEN s.page_count ELSE NULL END), 2), 0) AS avg_depth_as_entry,
+                    COUNT(DISTINCT CASE WHEN REGEXP_REPLACE(h.page_url,'\\\\?.*$','') = REGEXP_REPLACE(s.entry_page,'\\\\?.*$','') THEN h.session_id END) AS entry_sessions
                  FROM {$t_hits} h
                  LEFT JOIN {$t_sess} s ON s.session_id = h.session_id
                  LEFT JOIN (
-                     SELECT session_id, page_url, MAX(scroll_depth) AS max_scroll
+                     SELECT session_id, REGEXP_REPLACE(page_url,'\\\\?.*$','') AS clean_url, MAX(scroll_depth) AS max_scroll
                      FROM {$t_scroll}
-                     WHERE recorded_at >= %s AND recorded_at <= %s
-                     GROUP BY session_id, page_url
-                 ) sc ON sc.session_id = h.session_id AND sc.page_url = h.page_url
+                     WHERE session_id IN (
+                         SELECT DISTINCT session_id FROM {$t_hits}
+                         WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                     )
+                     GROUP BY session_id, clean_url
+                 ) sc ON sc.session_id = h.session_id AND sc.clean_url = REGEXP_REPLACE(h.page_url,'\\\\?.*$','')
+                 LEFT JOIN (
+                     SELECT visitor_hash,
+                            CASE WHEN post_id > 0 THEN CONCAT('pid:', post_id) ELSE REGEXP_REPLACE(page_url,'\\\\?.*$','') END AS grp_key,
+                            COUNT(DISTINCT session_id) AS visit_count
+                     FROM {$t_hits}
+                     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                     GROUP BY visitor_hash, grp_key
+                 ) rv ON rv.visitor_hash = h.visitor_hash
+                     AND rv.grp_key = {$group_key}
                  WHERE h.hit_at >= %s AND h.hit_at <= %s AND h.is_superseded = 0
-                 GROUP BY h.page_url, h.post_id
-                 ORDER BY engagement_score DESC
-                 LIMIT %d",
-                $from, $to, $from, $to, $limit
+                 GROUP BY {$group_key}",
+                $from, $to, $from, $to, $from, $to
             ) );
         } elseif ( $has_sess && $has_scroll_col ) {
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $rows = $wpdb->get_results( $wpdb->prepare(
                 "SELECT
-                    h.page_url,
+                    CASE WHEN h.post_id > 0 THEN MIN(REGEXP_REPLACE(h.page_url, '\\\\?.*$', ''))
+                         ELSE REGEXP_REPLACE(h.page_url, '\\\\?.*$', '')
+                    END                             AS page_url,
                     MAX(h.page_title)               AS page_title,
-                    h.post_id,
+                    MAX(h.post_id)                  AS post_id,
                     COUNT(DISTINCT h.session_id)    AS total_sessions,
                     COUNT(*)                        AS page_views,
                     COUNT(DISTINCT h.visitor_hash)  AS unique_visitors,
-                    ROUND(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END)) AS avg_duration,
-                    ROUND(AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END), 1) AS avg_scroll,
+                    COALESCE(ROUND(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END)), 0) AS avg_duration,
+                    COALESCE(ROUND(AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END), 1), 0) AS avg_scroll,
                     COUNT(DISTINCT CASE WHEN s.is_bounce = 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) AS engaged_sessions,
-                    ROUND(
-                        LEAST(COALESCE(AVG(CASE WHEN s.engagement_time > 0 THEN s.engagement_time WHEN s.duration > 0 THEN s.duration ELSE NULL END), 0), 300) / 300.0 * 40
-                      + COALESCE(AVG(CASE WHEN s.max_scroll_depth > 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN s.max_scroll_depth ELSE NULL END), 0) / 100.0 * 35
-                      + CASE WHEN COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) > 0
-                             THEN COUNT(DISTINCT CASE WHEN s.is_bounce = 0 AND (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) / COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) * 25.0
-                             ELSE 0 END
-                    , 1) AS engagement_score
+                    COUNT(DISTINCT CASE WHEN (s.duration > 0 OR s.engagement_time > 0) THEN h.session_id END) AS measurable_sessions,
+                    COUNT(DISTINCT CASE WHEN rv.visit_count > 1 THEN h.visitor_hash END) AS returning_visitors,
+                    COALESCE(ROUND(AVG(CASE WHEN REGEXP_REPLACE(h.page_url,'\\\\?.*$','') = REGEXP_REPLACE(s.entry_page,'\\\\?.*$','') AND s.page_count > 0 THEN s.page_count ELSE NULL END), 2), 0) AS avg_depth_as_entry,
+                    COUNT(DISTINCT CASE WHEN REGEXP_REPLACE(h.page_url,'\\\\?.*$','') = REGEXP_REPLACE(s.entry_page,'\\\\?.*$','') THEN h.session_id END) AS entry_sessions
                  FROM {$t_hits} h
                  LEFT JOIN {$t_sess} s ON s.session_id = h.session_id
+                 LEFT JOIN (
+                     SELECT visitor_hash,
+                            CASE WHEN post_id > 0 THEN CONCAT('pid:', post_id) ELSE REGEXP_REPLACE(page_url,'\\\\?.*$','') END AS grp_key,
+                            COUNT(DISTINCT session_id) AS visit_count
+                     FROM {$t_hits}
+                     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                     GROUP BY visitor_hash, grp_key
+                 ) rv ON rv.visitor_hash = h.visitor_hash
+                     AND rv.grp_key = {$group_key}
                  WHERE h.hit_at >= %s AND h.hit_at <= %s AND h.is_superseded = 0
-                 GROUP BY h.page_url, h.post_id
-                 ORDER BY engagement_score DESC
-                 LIMIT %d",
-                $from, $to, $limit
+                 GROUP BY {$group_key}",
+                $from, $to, $from, $to
             ) );
         } else {
-            // Sans sessions : score sur pages vues uniquement (bounce = 1 seule page)
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $rows = $wpdb->get_results( $wpdb->prepare(
                 "SELECT
-                    h.page_url,
+                    CASE WHEN h.post_id > 0 THEN MIN(REGEXP_REPLACE(h.page_url, '\\\\?.*$', ''))
+                         ELSE REGEXP_REPLACE(h.page_url, '\\\\?.*$', '')
+                    END                             AS page_url,
                     MAX(h.page_title)               AS page_title,
-                    h.post_id,
+                    MAX(h.post_id)                  AS post_id,
                     COUNT(DISTINCT h.session_id)    AS total_sessions,
                     COUNT(*)                        AS page_views,
                     COUNT(DISTINCT h.visitor_hash)  AS unique_visitors,
-                    NULL                            AS avg_duration,
-                    NULL                            AS avg_scroll,
+                    0                               AS avg_duration,
+                    0                               AS avg_scroll,
                     COUNT(DISTINCT CASE WHEN pv.pv > 1 THEN h.session_id END) AS engaged_sessions,
-                    ROUND(
-                        COUNT(DISTINCT CASE WHEN pv.pv > 1 THEN h.session_id END)
-                        / COUNT(DISTINCT h.session_id) * 100.0
-                    , 1) AS engagement_score
+                    COUNT(DISTINCT h.session_id)    AS measurable_sessions,
+                    COUNT(DISTINCT CASE WHEN rv.visit_count > 1 THEN h.visitor_hash END) AS returning_visitors,
+                    COALESCE(ROUND(AVG(CASE WHEN pv.pv > 0 THEN pv.pv ELSE NULL END), 2), 0) AS avg_depth_as_entry,
+                    COUNT(DISTINCT h.session_id)    AS entry_sessions
                  FROM {$t_hits} h
                  LEFT JOIN (
                      SELECT session_id, COUNT(*) AS pv
@@ -1026,15 +1072,134 @@ class Statify_Rest {
                      WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
                      GROUP BY session_id
                  ) pv ON pv.session_id = h.session_id
+                 LEFT JOIN (
+                     SELECT visitor_hash,
+                            CASE WHEN post_id > 0 THEN CONCAT('pid:', post_id) ELSE REGEXP_REPLACE(page_url,'\\\\?.*$','') END AS grp_key,
+                            COUNT(DISTINCT session_id) AS visit_count
+                     FROM {$t_hits}
+                     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                     GROUP BY visitor_hash, grp_key
+                 ) rv ON rv.visitor_hash = h.visitor_hash
+                     AND rv.grp_key = {$group_key}
                  WHERE h.hit_at >= %s AND h.hit_at <= %s AND h.is_superseded = 0
-                 GROUP BY h.page_url, h.post_id
-                 ORDER BY engagement_score DESC, page_views DESC
-                 LIMIT %d",
-                $from, $to, $from, $to, $limit
+                 GROUP BY {$group_key}",
+                $from, $to, $from, $to, $from, $to
             ) );
         }
 
-        return rest_ensure_response( $rows ? $rows : array() );
+        if ( empty( $rows ) ) {
+            return rest_ensure_response( array() );
+        }
+
+        // ── Calcul du score composite en PHP ────────────────────────────────────
+        //
+        // 6 signaux indépendants, normalisés 0→1, combinés avec des poids calibrés :
+        //
+        //  1. Durée relative    22% — durée de la page VS médiane du site
+        //  2. Scroll depth      20% — profondeur de lecture effective
+        //  3. Taux engagement   20% — sessions non-bounce (Wilson lower bound)
+        //  4. Taux de retour    18% — visiteurs revenant sur la même page
+        //  5. Depth/session     12% — pages vues dans la session (entry point)
+        //  6. Confiance          8% — fiabilité selon le volume de sessions
+
+        $durations = array_filter( array_map( function( $r ) { return (float) $r->avg_duration; }, $rows ), function( $d ) { return $d > 0; } );
+        sort( $durations );
+        $count_dur  = count( $durations );
+        $median_dur = $count_dur > 0
+            ? ( $count_dur % 2 === 0
+                ? ( $durations[ $count_dur / 2 - 1 ] + $durations[ $count_dur / 2 ] ) / 2
+                : $durations[ (int) ( $count_dur / 2 ) ] )
+            : 120;
+        $median_dur = max( 10, $median_dur );
+
+        $z  = 1.96;
+        $z2 = $z * $z;
+
+        $scored = array();
+        foreach ( $rows as $row ) {
+            $n_total      = max( 1, (int) $row->total_sessions );
+            $n_measurable = max( 0, (int) $row->measurable_sessions );
+            $n_engaged    = max( 0, (int) $row->engaged_sessions );
+            $n_returning  = max( 0, (int) $row->returning_visitors );
+            $n_unique     = max( 1, (int) $row->unique_visitors );
+            $n_entry      = max( 0, (int) $row->entry_sessions );
+            $avg_dur      = max( 0, (float) $row->avg_duration );
+            $avg_scroll   = max( 0, min( 100, (float) $row->avg_scroll ) );
+            $avg_depth    = max( 0, (float) $row->avg_depth_as_entry );
+
+            // Signal 1 : Durée relative
+            $s_duration = $avg_dur > 0 ? min( 1.0, $avg_dur / ( 2.0 * $median_dur ) ) : 0.0;
+
+            // Signal 2 : Scroll depth
+            $s_scroll = $avg_scroll / 100.0;
+
+            // Signal 3 : Taux d'engagement (Wilson lower bound)
+            $p_eng = $n_measurable > 0 ? $n_engaged / $n_measurable : 0;
+            if ( $n_measurable > 0 ) {
+                $wilson_eng   = ( $p_eng + $z2 / ( 2 * $n_measurable )
+                    - $z * sqrt( $p_eng * ( 1 - $p_eng ) / $n_measurable + $z2 / ( 4 * $n_measurable * $n_measurable ) ) )
+                    / ( 1 + $z2 / $n_measurable );
+                $s_engagement = max( 0, $wilson_eng );
+            } else {
+                $s_engagement = 0.0;
+            }
+
+            // Signal 4 : Taux de retour
+            $s_return = min( 1.0, ( $n_returning / $n_unique ) / 0.5 );
+
+            // Signal 5 : Profondeur de navigation (entry point)
+            $s_depth = ( $n_entry > 0 && $avg_depth > 0 )
+                ? min( 1.0, max( 0.0, ( $avg_depth - 1.0 ) / 4.0 ) )
+                : 0.0;
+
+            // Signal 6 : Confiance (volume)
+            if ( $n_total >= 200 )    { $s_confidence = 1.0; }
+            elseif ( $n_total >= 50 ) { $s_confidence = 0.85; }
+            elseif ( $n_total >= 20 ) { $s_confidence = 0.65; }
+            elseif ( $n_total >= 5 )  { $s_confidence = 0.40; }
+            else                      { $s_confidence = 0.15; }
+
+            $score = round( min( 100,
+                ( $s_duration * 0.22 + $s_scroll * 0.20 + $s_engagement * 0.20
+                + $s_return * 0.18 + $s_depth * 0.12 + $s_confidence * 0.08 ) * 100
+            ), 1 );
+
+            $eng_rate_pct = $n_measurable > 0 ? round( $n_engaged / $n_measurable * 100 ) : null;
+
+            $scored[] = array(
+                'page_url'           => $row->page_url,
+                'page_title'         => $row->page_title,
+                'post_id'            => (int) $row->post_id,
+                'total_sessions'     => $n_total,
+                'page_views'         => (int) $row->page_views,
+                'unique_visitors'    => $n_unique,
+                'avg_duration'       => $avg_dur,
+                'avg_scroll'         => $avg_scroll,
+                'engaged_sessions'   => $n_engaged,
+                'returning_visitors' => $n_returning,
+                'avg_depth_as_entry' => round( $avg_depth, 1 ),
+                'entry_sessions'     => $n_entry,
+                'engagement_score'   => $score,
+                // Valeurs brutes affichées dans chaque cellule de signal
+                'score_signals'      => array(
+                    'duration'   => array( 'score' => round( $s_duration   * 100, 1 ), 'raw' => round( $avg_dur ) ),
+                    'scroll'     => array( 'score' => round( $s_scroll     * 100, 1 ), 'raw' => round( $avg_scroll ) ),
+                    'engagement' => array( 'score' => round( $s_engagement * 100, 1 ), 'raw' => $eng_rate_pct ),
+                    'return'     => array( 'score' => round( $s_return     * 100, 1 ), 'raw' => round( $n_returning / $n_unique * 100 ) ),
+                    'depth'      => array( 'score' => round( $s_depth      * 100, 1 ), 'raw' => round( $avg_depth, 1 ) ),
+                    'confidence' => array( 'score' => round( $s_confidence * 100, 1 ), 'raw' => $n_total ),
+                ),
+            );
+        }
+
+        usort( $scored, function( $a, $b ) {
+            if ( $b['engagement_score'] !== $a['engagement_score'] ) {
+                return $b['engagement_score'] <=> $a['engagement_score'];
+            }
+            return $b['total_sessions'] <=> $a['total_sessions'];
+        } );
+
+        return rest_ensure_response( array_slice( $scored, 0, $limit ) );
     }
 
 }

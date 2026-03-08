@@ -10,20 +10,26 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Date params from URL (passed by dashboard links)
-$from = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : gmdate( 'Y-m-d' );
-$to   = isset( $_GET['to'] )   ? sanitize_text_field( wp_unslash( $_GET['to'] ) )   : gmdate( 'Y-m-d' );
+$from = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : wp_date( 'Y-m-d' );
+$to   = isset( $_GET['to'] )   ? sanitize_text_field( wp_unslash( $_GET['to'] ) )   : wp_date( 'Y-m-d' );
 
 // Validate date format
 if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $from ) ) {
-    $from = gmdate( 'Y-m-d' );
+    $from = wp_date( 'Y-m-d' );
 }
 if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $to ) ) {
-    $to = gmdate( 'Y-m-d' );
+    $to = wp_date( 'Y-m-d' );
 }
 
 global $wpdb;
 $table = $wpdb->prefix . 'statify_hits';
 
+// Conversion fuseau horaire du site — identique à la REST API
+$tz_offset_seconds = (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+$from_utc = gmdate( 'Y-m-d H:i:s', strtotime( $from . ' 00:00:00' ) - $tz_offset_seconds );
+$to_utc   = gmdate( 'Y-m-d H:i:s', strtotime( $to   . ' 23:59:59' ) - $tz_offset_seconds );
+
+// Données par page — avec is_superseded = 0 et fuseau correct
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $rows = $wpdb->get_results( $wpdb->prepare(
     "SELECT
@@ -34,12 +40,31 @@ $rows = $wpdb->get_results( $wpdb->prepare(
         COUNT(DISTINCT visitor_hash) as unique_visitors,
         COUNT(DISTINCT session_id) as sessions
      FROM {$table}
-     WHERE hit_at >= %s AND hit_at <= %s
+     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
      GROUP BY page_url, page_title, post_id
      ORDER BY views DESC",
-    $from . ' 00:00:00',
-    $to . ' 23:59:59'
+    $from_utc,
+    $to_utc
 ) );
+
+// Totaux globaux — requête séparée pour éviter le double-comptage.
+// array_sum(unique_visitors par page) ≠ visiteurs uniques globaux car un même
+// visiteur peut apparaître sur plusieurs pages. On recompte directement en DB.
+// phpcs:ignore WordPress.DB.DirectDatabaseQuery
+$totals = $wpdb->get_row( $wpdb->prepare(
+    "SELECT
+        COUNT(*) as total_views,
+        COUNT(DISTINCT visitor_hash) as total_visitors,
+        COUNT(DISTINCT session_id) as total_sessions
+     FROM {$table}
+     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0",
+    $from_utc,
+    $to_utc
+) );
+
+$total_views    = (int) ( $totals->total_views    ?? 0 );
+$total_visitors = (int) ( $totals->total_visitors ?? 0 );
+$total_sessions = (int) ( $totals->total_sessions ?? 0 );
 
 $max_views = ! empty( $rows ) ? (int) $rows[0]->views : 1;
 
@@ -77,11 +102,6 @@ $period_label = ( $from === $to ) ? $label_from : $label_from . ' → ' . $label
     </div>
 
     <!-- Summary KPIs -->
-    <?php
-    $total_views    = array_sum( array_column( $rows, 'views' ) );
-    $total_visitors = array_sum( array_column( $rows, 'unique_visitors' ) );
-    $total_sessions = array_sum( array_column( $rows, 'sessions' ) );
-    ?>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px;">
         <div class="statify-kpi-card" style="text-align:center;">
             <div class="statify-kpi-icon">📄</div>

@@ -32,44 +32,60 @@ class Statify_Dashboard {
         global $wpdb;
         $table = $wpdb->prefix . 'statify_hits';
 
-        // Today's stats
-        $today = gmdate( 'Y-m-d' );
+        // Fuseau horaire du site (identique à la REST API)
+        $tz_offset_seconds = (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+        $tz_str            = sprintf( '%+03d:00', (int) round( $tz_offset_seconds / HOUR_IN_SECONDS ) );
+
+        // Today's stats — filtrées avec le fuseau du site + is_superseded = 0
+        $today     = wp_date( 'Y-m-d' );
+        $today_utc_from = gmdate( 'Y-m-d H:i:s', strtotime( $today . ' 00:00:00' ) - $tz_offset_seconds );
+        $today_utc_to   = gmdate( 'Y-m-d H:i:s', strtotime( $today . ' 23:59:59' ) - $tz_offset_seconds );
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $today_stats = $wpdb->get_row( $wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT visitor_hash) as visitors,
                 COUNT(*) as page_views
              FROM {$table}
-             WHERE DATE(hit_at) = %s",
-            $today
+             WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0",
+            $today_utc_from,
+            $today_utc_to
         ) );
 
-        // Last 7 days
-        $week_ago = gmdate( 'Y-m-d', strtotime( '-7 days' ) );
+        // Last 7 days — même logique fuseau + is_superseded = 0
+        $week_ago         = wp_date( 'Y-m-d', strtotime( '-6 days' ) );
+        $week_utc_from    = gmdate( 'Y-m-d H:i:s', strtotime( $week_ago . ' 00:00:00' ) - $tz_offset_seconds );
+        $week_utc_to      = gmdate( 'Y-m-d H:i:s', strtotime( $today . ' 23:59:59' ) - $tz_offset_seconds );
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $week_stats = $wpdb->get_row( $wpdb->prepare(
             "SELECT
                 COUNT(DISTINCT visitor_hash) as visitors,
                 COUNT(*) as page_views
              FROM {$table}
-             WHERE hit_at >= %s",
-            $week_ago . ' 00:00:00'
+             WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0",
+            $week_utc_from,
+            $week_utc_to
         ) );
 
-        // Mini sparkline data (last 7 days)
+        // Mini sparkline data (last 7 days) — avec CONVERT_TZ pour le groupement par date locale
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $daily_data = $wpdb->get_results( $wpdb->prepare(
-            "SELECT DATE(hit_at) as date, COUNT(DISTINCT visitor_hash) as visitors
+            "SELECT DATE(CONVERT_TZ(hit_at, '+00:00', %s)) as date,
+                    COUNT(DISTINCT visitor_hash) as visitors
              FROM {$table}
-             WHERE hit_at >= %s
-             GROUP BY DATE(hit_at)
+             WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+             GROUP BY DATE(CONVERT_TZ(hit_at, '+00:00', %s))
              ORDER BY date ASC",
-            $week_ago . ' 00:00:00'
+            $tz_str,
+            $week_utc_from,
+            $week_utc_to,
+            $tz_str
         ) );
 
         $sparkline_values = array();
         for ( $i = 6; $i >= 0; $i-- ) {
-            $d = gmdate( 'Y-m-d', strtotime( "-{$i} days" ) );
+            $d = wp_date( 'Y-m-d', strtotime( "-{$i} days" ) );
             $found = false;
             foreach ( $daily_data as $row ) {
                 if ( $row->date === $d ) {

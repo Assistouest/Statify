@@ -9,20 +9,25 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-$from = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : gmdate( 'Y-m-d' );
-$to   = isset( $_GET['to'] )   ? sanitize_text_field( wp_unslash( $_GET['to'] ) )   : gmdate( 'Y-m-d' );
+$from = isset( $_GET['from'] ) ? sanitize_text_field( wp_unslash( $_GET['from'] ) ) : wp_date( 'Y-m-d' );
+$to   = isset( $_GET['to'] )   ? sanitize_text_field( wp_unslash( $_GET['to'] ) )   : wp_date( 'Y-m-d' );
 
-if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $from ) ) $from = gmdate( 'Y-m-d' );
-if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $to ) )   $to   = gmdate( 'Y-m-d' );
+if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $from ) ) $from = wp_date( 'Y-m-d' );
+if ( ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $to ) )   $to   = wp_date( 'Y-m-d' );
 
 global $wpdb;
 $table = $wpdb->prefix . 'statify_hits';
 
+// Conversion fuseau horaire du site — identique à la REST API
+$tz_offset_seconds = (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+$from_utc = gmdate( 'Y-m-d H:i:s', strtotime( $from . ' 00:00:00' ) - $tz_offset_seconds );
+$to_utc   = gmdate( 'Y-m-d H:i:s', strtotime( $to   . ' 23:59:59' ) - $tz_offset_seconds );
+
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 $total_hits = (int) $wpdb->get_var( $wpdb->prepare(
-    "SELECT COUNT(*) FROM {$table} WHERE hit_at >= %s AND hit_at <= %s",
-    $from . ' 00:00:00',
-    $to . ' 23:59:59'
+    "SELECT COUNT(*) FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0",
+    $from_utc,
+    $to_utc
 ) );
 
 // phpcs:ignore WordPress.DB.DirectDatabaseQuery
@@ -33,11 +38,11 @@ $rows = $wpdb->get_results( $wpdb->prepare(
         COUNT(DISTINCT visitor_hash) as unique_visitors,
         COUNT(DISTINCT session_id) as sessions
      FROM {$table}
-     WHERE hit_at >= %s AND hit_at <= %s AND country_code != ''
+     WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND country_code != ''
      GROUP BY country_code
      ORDER BY hits DESC",
-    $from . ' 00:00:00',
-    $to . ' 23:59:59'
+    $from_utc,
+    $to_utc
 ) );
 
 // Country name map (ISO 3166-1 alpha-2 — common subset)

@@ -642,3 +642,13 @@
         display: none;
     }
 }
+
+/* ── Tableau engagement/pages : grille signaux ──────────────────────────────── */
+
+#eng-pages-table thead th:last-child {
+    padding: 10px 16px 8px;
+}
+
+#eng-pages-table tbody td:last-child {
+    padding: 10px 16px;
+}

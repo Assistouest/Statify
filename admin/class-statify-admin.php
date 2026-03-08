@@ -161,18 +161,17 @@ class Statify_Admin {
     }
 
     /**
-     * Render floating refresh button on all Statify pages.
+     * Render floating "Buy Me a Coffee" button on all Statify pages.
      */
     public function render_refresh_button() {
         $screen = get_current_screen();
         if ( ! $screen || strpos( $screen->id, 'statify' ) === false ) {
             return;
         }
-        $rest_base = esc_url_raw( rest_url( 'statify/v1/' ) );
-        $nonce     = wp_create_nonce( 'wp_rest' );
         ?>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
         <style>
-            #statify-refresh-btn {
+            #statify-coffee-btn {
                 position: fixed;
                 bottom: 32px;
                 right: 32px;
@@ -180,68 +179,27 @@ class Statify_Admin {
                 display: flex;
                 align-items: center;
                 gap: 8px;
-                background: #6c63ff;
-                color: #fff;
+                background: #FFDD00;
+                color: #000;
                 border: none;
                 border-radius: 50px;
                 padding: 12px 22px;
                 font-size: 14px;
-                font-weight: 600;
+                font-weight: 700;
                 cursor: pointer;
-                box-shadow: 0 4px 16px rgba(108,99,255,0.35);
+                box-shadow: 0 4px 16px rgba(255,221,0,0.45);
+                text-decoration: none;
                 transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
             }
-            #statify-refresh-btn:hover  { background:#5549e0; transform:translateY(-1px); color:#fff; }
-            #statify-refresh-btn:active { transform:scale(0.97); }
-            #statify-refresh-btn:disabled { opacity:.6; cursor:default; transform:none; }
-            #statify-refresh-btn.loading svg { animation:statify-spin .7s linear infinite; }
-            #statify-refresh-btn.done { background:#16a34a; }
-            #statify-refresh-btn.error { background:#dc2626; }
-            @keyframes statify-spin { to { transform:rotate(360deg); } }
+            #statify-coffee-btn:hover  { background: #f5d400; transform: translateY(-1px); color: #000; box-shadow: 0 6px 20px rgba(255,221,0,0.55); }
+            #statify-coffee-btn:active { transform: scale(0.97); }
+            #statify-coffee-btn i { font-size: 15px; }
         </style>
 
-        <button id="statify-refresh-btn">
-            <svg id="statify-refresh-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
-            </svg>
-            <span id="statify-refresh-label"><?php esc_html_e( 'Actualiser', 'statify' ); ?></span>
-        </button>
-
-        <script>
-        (function () {
-            var btn   = document.getElementById('statify-refresh-btn');
-            var label = document.getElementById('statify-refresh-label');
-
-            btn.addEventListener('click', function () {
-                btn.disabled = true;
-                btn.classList.add('loading');
-                btn.classList.remove('done','error');
-                label.textContent = 'Chargement…';
-
-                // On appelle directement loadAllData() qui utilise désormais
-                // cache:'no-store' + _t=timestamp sur CHAQUE requête.
-                // Plus besoin de "pre-bust" séparé qui causait une double requête.
-                if (typeof window.loadAllData === 'function') {
-                    window.loadAllData();
-                    // Petit délai pour que les fetches aient le temps de partir
-                    setTimeout(function () {
-                        btn.classList.remove('loading');
-                        btn.classList.add('done');
-                        label.textContent = '✓ Mis à jour';
-                        setTimeout(function () {
-                            btn.classList.remove('done');
-                            label.textContent = 'Actualiser';
-                            btn.disabled = false;
-                        }, 2000);
-                    }, 800);
-                } else {
-                    // Fallback : recharger la page
-                    window.location.reload();
-                }
-            });
-        })();
-        </script>
+        <a id="statify-coffee-btn" href="https://buymeacoffee.com/assistouest" target="_blank" rel="noopener noreferrer">
+            <i class="fa-solid fa-mug-hot"></i>
+            <?php esc_html_e( 'Offrir un café au créateur', 'statify' ); ?>
+        </a>
         <?php
     }
 

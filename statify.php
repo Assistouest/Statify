@@ -3,7 +3,7 @@
  * Plugin Name:       Statify
  * Plugin URI:        https://example.com/statify
  * Description:       Statistiques avancées auto-hébergées, légères et respectueuses de la vie privée pour WordPress.
- * Version:           1.2.2
+ * Version:           1.2.3
  * Author:            Adrien
  * Author URI:        https://example.com
  * License:           GPL-2.0+
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Plugin constants
-define( 'STATIFY_VERSION', '1.2.2' );
+define( 'STATIFY_VERSION', '1.2.3' );
 define( 'STATIFY_PLUGIN_FILE', __FILE__ );
 define( 'STATIFY_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'STATIFY_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
