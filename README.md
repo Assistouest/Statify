@@ -1,18 +1,29 @@
 <div align="center">
 
+<img src="Statify.svg" alt="Statify Logo" width="120" />
+
 # ⚡ Statify
+### Reprenez le contrôle de vos analytics. Sans compromis.
 
-**Plugin WordPress d'analytics auto-hébergé, léger et respectueux de la vie privée.**
+**La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
 
-[![Version](https://img.shields.io/badge/version-1.2.2-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
+[![Version](https://img.shields.io/badge/version-1.2.3-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
-[![Licence](https://img.shields.io/badge/licence-GPLv2%2B-blue?style=flat-square)](LICENSE)
-[![RGPD](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](https://github.com/votre-pseudo/statify#privacy)
+[![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
 
-Remplacez Google Analytics par une solution auto-hébergée, vos données restent sur votre serveur.
+[Fonctionnalités](#-pourquoi-statify-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
 
 </div>
+
+---
+
+## 🚀 Pourquoi Statify ?
+
+- **0% de perte de données** : Capture chaque visite, même sans consentement.
+- **100% Souverain** : Vos données restent chez vous, sur votre serveur.
+- **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
+- **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
 
 ---
 
@@ -113,3 +124,10 @@ Si `null` est retourné, le hit est envoyé sans `visitorId`. Le serveur détect
 ### Mode 3 — Cookie sans bannière (debug)
 
 Cookie visitorId posé immédiatement, durée 395 jours. Tracking complet dès le premier chargement. Identité persistante garantie. À utiliser en environnement de développement uniquement.
+
+---
+
+<div align="center">
+  <p>Fait avec ❤️ par Adrien pour la communauté WordPress.</p>
+  <a href="https://buymeacoffee.com/assistouest" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
+</div>
