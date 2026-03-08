@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="Statify.svg" alt="Statify Logo" width="120" />
+<img src="Statify.svg" alt="Statify Logo" width="60" />
 
-# ⚡ Statify
+# Statify
 ### Reprenez le contrôle de vos analytics. Sans compromis.
 
 **La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
