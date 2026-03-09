@@ -50,7 +50,7 @@ Peu importe ce que fait le visiteur — accepter, refuser, fermer la bannière, 
 
 ## Les trois modes
 
-### Mode 1 — Cookieless
+### Mode 1. Cookieless
 
 Aucun cookie. Aucune bannière. Démarre immédiatement.
 
@@ -85,7 +85,7 @@ Le hash change chaque nuit à minuit UTC. Le même visiteur produit un hash iden
 
 ---
 
-### Mode 2 — Cookie + Bannière RGPD
+### Mode 2. Cookie + Bannière RGPD
 
 C'est le Mode 1 augmenté. Le cookieless tourne en permanence en dessous. La bannière et le cookie viennent s'ajouter par-dessus.
 
@@ -149,7 +149,7 @@ Si `null` est retourné, le hit est envoyé sans `visitorId`. Le serveur détect
 
 ---
 
-### Mode 3 — Cookie sans bannière (pour les développeurs)
+### Mode 3. Cookie sans bannière (pour les développeurs)
 
 Cookie visitorId posé immédiatement, durée 395 jours. Tracking complet dès le premier chargement. Identité persistante garantie. À utiliser en environnement de développement uniquement.
 
