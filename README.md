@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="Statify.svg" alt="Statify Logo" width="120" />
+<img src="Statify.svg" alt="Statify Logo" width="60" />
 
-# ⚡ Statify
+# Statify
 ### Reprenez le contrôle de vos analytics. Sans compromis.
 
 **La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
@@ -119,7 +119,7 @@ Aucun cookie posé.
 | Refus | Non | Journalier cookieless | ✗ Non | Aucune |
 | Fermeture sans réponse | Non | Journalier cookieless + sendBeacon | ✗ Non | Aucune |
 
-#### Cas particulier — cookie bloqué (v1.2.2)
+#### Cas particulier, le cookie bloqué
 
 Même si le visiteur accepte, son navigateur peut bloquer le cookie (mode navigation privée, ITP Safari, extension bloqueur). Avant v1.2.2, ce cas produisait un UUID fantôme inutilisable.
 
