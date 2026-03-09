@@ -44,7 +44,7 @@ La plupart des analytics conditionnent le tracking au consentement : pas de cook
 
 > **Le cookieless est le socle. Le cookie est un enrichissement optionnel.**
 
-Peu importe ce que fait le visiteur — accepter, refuser, fermer la bannière, bloquer les cookies, désactiver JS — une visite est toujours enregistrée. Le consentement ne décide pas si la visite est comptée. Il décide uniquement si le visiteur peut être reconnu lors de sa prochaine visite.
+Peu importe ce que fait le visiteur (accepter, refuser, fermer la bannière, bloquer les cookies, désactiver JS) une visite est toujours enregistrée. Le consentement ne décide pas si la visite est comptée. Il décide uniquement si le visiteur peut être reconnu lors de sa prochaine visite.
 
 ---
 
