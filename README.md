@@ -12,8 +12,6 @@
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
 
-[Fonctionnalités](#-pourquoi-Always Analytics-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
-
 </div>
 
 ---
