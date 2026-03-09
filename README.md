@@ -2,7 +2,7 @@
 
 <img src="Statify.svg" alt="Statify Logo" width="60" />
 
-# Statify
+# Always-Analytics
 ### Reprenez le contrôle de vos analytics. Sans compromis.
 
 **La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
@@ -12,20 +12,20 @@
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
 
-[Fonctionnalités](#-pourquoi-statify-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
+[Fonctionnalités](#-pourquoi-Always-Analytics-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
 
 </div>
 
 ---
 
-## 🚀 Pourquoi Statify ?
+## 🚀 Pourquoi Always-Analytics ?
 
 - **0% de perte de données** : Capture chaque visite, même sans consentement.
 - **100% Souverain** : Vos données restent chez vous, sur votre serveur.
 - **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
 - **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
 
-Statify ne se contente pas de compter les vues. Il **qualifie la lecture** grâce à un algorithme de scoring composite sophistiqué qui identifie vos contenus les plus performants.
+Always-Analytics ne se contente pas de compter les vues. Il **qualifie la lecture** grâce à un algorithme de scoring composite sophistiqué qui identifie vos contenus les plus performants.
 
 | Page | Score | 🕒 Durée | ⬇ Scroll | ✅ Engag. | 🔁 Retour | 📄 Profond. | 📊 Sessions |
 | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -33,11 +33,11 @@ Statify ne se contente pas de compter les vues. Il **qualifie la lecture** grâc
 | 🥈 **Enable automatic updates...** | **47** | 14m 54s | 100% | 100% | 0% | — | 1 sess. |
 | 🥉 **How to fully update...** | **47** | -- | -- | -- | -- | -- | -- |
 
-Statify cherche à comprendre comment vos contenus sont  consommés. Là où la plupart des outils d’analytics se limitent au nombre de pages vues, Statify analyse la qualité de la lecture à travers un score d’engagement composite. Ce score permet d’identifier les pages qui captent véritablement l’attention de vos visiteurs et non simplement celles qui génèrent des clics.
+Always-Analytics cherche à comprendre comment vos contenus sont  consommés. Là où la plupart des outils d’analytics se limitent au nombre de pages vues, Always-Analytics analyse la qualité de la lecture à travers un score d’engagement composite. Ce score permet d’identifier les pages qui captent véritablement l’attention de vos visiteurs et non simplement celles qui génèrent des clics.
 
-Pour y parvenir, Statify ne considère pas toutes les visites de la même manière. Un visiteur qui reste dix minutes sur une page sans faire défiler le contenu ne représente pas le même type de lecture qu’un lecteur qui parcourt l’article jusqu’au bout en quelques dizaines de secondes. En combinant plusieurs signaux comportementaux (durée de lecture, profondeur de scroll, engagement actif, fidélité des visiteurs et navigation au sein du site) Statify construit une vision beaucoup plus nuancée de la performance de chaque contenu.
+Pour y parvenir, Always-Analytics ne considère pas toutes les visites de la même manière. Un visiteur qui reste dix minutes sur une page sans faire défiler le contenu ne représente pas le même type de lecture qu’un lecteur qui parcourt l’article jusqu’au bout en quelques dizaines de secondes. En combinant plusieurs signaux comportementaux (durée de lecture, profondeur de scroll, engagement actif, fidélité des visiteurs et navigation au sein du site) Always-Analytics construit une vision beaucoup plus nuancée de la performance de chaque contenu.
 
-**Réduction du bruit (Loi de Wilson)** : L’un des défis majeurs de l’analyse de données est le biais lié aux petits volumes. Une page qui reçoit une seule visite avec un engagement parfait pourrait apparaître artificiellement comme la meilleure page du site. Pour éviter ce type d’anomalie statistique, Statify applique la borne inférieure de l’intervalle de confiance de Wilson. Cette méthode réduit l’impact des petits échantillons et privilégie les contenus qui démontrent une performance solide sur un volume de données plus significatif.
+**Réduction du bruit (Loi de Wilson)** : L’un des défis majeurs de l’analyse de données est le biais lié aux petits volumes. Une page qui reçoit une seule visite avec un engagement parfait pourrait apparaître artificiellement comme la meilleure page du site. Pour éviter ce type d’anomalie statistique, Always-Analytics applique la borne inférieure de l’intervalle de confiance de Wilson. Cette méthode réduit l’impact des petits échantillons et privilégie les contenus qui démontrent une performance solide sur un volume de données plus significatif.
 
 Le score est **relatif à votre site**. Nous calculons la médiane de vos contenus pour définir ce qu'est une lecture de longue durée, là où les autres imposent des seuils arbitraires. Les sessions sont ensuite évaluées par rapport à ces repères afin de produire un score plus pertinent.
 
@@ -47,7 +47,7 @@ Le score final repose sur une pondération équilibrée de plusieurs indicateurs
 
 ## L'algorithme de collecte résiliente
 
-La plupart des analytics conditionnent le tracking au consentement : pas de cookie accepté = visite perdue. Statify fonctionne à l'envers.
+La plupart des analytics conditionnent le tracking au consentement : pas de cookie accepté = visite perdue. Always-Analytics fonctionne à l'envers.
 
 > **Le cookieless est le socle. Le cookie est un enrichissement optionnel.**
 
