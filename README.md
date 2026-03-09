@@ -1,18 +1,18 @@
 <div align="center">
 
-<img src="always-analytics.svg" alt="Always Analytics Logo" width="60" />
+<img src="Statify.svg" alt="Statify Logo" width="60" />
 
 # Always Analytics
 ### Reprenez le contrôle de vos analytics. Sans compromis.
 
 **La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
 
-[![Version](https://img.shields.io/badge/version-1.2.3-1db954?style=flat-square)](https://github.com/votre-pseudo/always-analytics/releases)
+[![Version](https://img.shields.io/badge/version-1.2.3-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
 
-[Fonctionnalités](#-pourquoi-statify-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
+[Fonctionnalités](#-pourquoi-Always Analytics-) • [Comment ça marche](#lalgorithme-de-collecte-résiliente) • [Détails Techniques](#les-trois-modes)
 
 </div>
 
@@ -39,11 +39,10 @@ Always Analytics ne se contente pas de compter les vues. Il **qualifie la lectur
 | 🥈 **Enable automatic updates...** | **47** | 14m 54s | 100% | 100% | 0% | — | 1 sess. |
 | 🥉 **How to fully update...** | **47** | -- | -- | -- | -- | -- | -- |
 
-### Une expertise statistique rare sur WordPress
 Contrairement aux solutions classiques (comme Yoast SEO ou les trackers GA basiques) qui se contentent de rapporter des données de surface, Always Analytics utilise une ingénierie de données avancée :
 
-- **Au-delà du simple "clic"** : La plupart des outils considèrent une vue comme un succès. Statify **qualifie** cette vue : un visiteur qui reste 10 minutes mais ne scrolle pas est statistiquement différent d'un lecteur qui parcourt tout l'article en 30 secondes.
-- **Réduction du bruit (Loi de Wilson)** : C'est là que Statify se distingue. En utilisant la limite inférieure de l'intervalle de confiance de Wilson, nous éliminons l'anomalie des "petits nombres" (une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site avec 1000 vues et 80% d'engagement).
+- **Au-delà du simple "clic"** : La plupart des outils considèrent une vue comme un succès. Always Analytics **qualifie** cette vue : un visiteur qui reste 10 minutes mais ne scrolle pas est statistiquement différent d'un lecteur qui parcourt tout l'article en 30 secondes.
+- **Réduction du bruit (Loi de Wilson)** : C'est là que Always Analytics se distingue. En utilisant la limite inférieure de l'intervalle de confiance de Wilson, nous éliminons l'anomalie des "petits nombres" (une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site avec 1000 vues et 80% d'engagement).
 - **Intelligence contextuelle** : Le score est **relatif à votre site**. Nous calculons la médiane réelle de vos contenus pour définir ce qu'est une lecture de "longue durée", là où les autres imposent des seuils arbitraires.
 - **Pondération Scientifique** : Le score final est une synthèse équilibrée : Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
 
