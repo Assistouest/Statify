@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="Statify.svg" alt="Statify Logo" width="60" />
+<img src="Always-Analytics.svg" alt="Statify Logo" width="60" />
 
 # Always Analytics
 ### Reprenez le contrôle de vos analytics. Sans compromis.
