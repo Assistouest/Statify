@@ -39,12 +39,16 @@ Statify ne se contente pas de compter les vues. Il **qualifie la lecture** grâc
 | 🥈 **Enable automatic updates...** | **47** | 14m 54s | 100% | 100% | 0% | — | 1 sess. |
 | 🥉 **How to fully update...** | **47** | -- | -- | -- | -- | -- | -- |
 
-Contrairement aux solutions classiques (comme Yoast SEO ou les trackers GA basiques) qui se contentent de rapporter des données de surface, Statify utilise une ingénierie de données avancée :
+Statify cherche à comprendre comment vos contenus sont  consommés. Là où la plupart des outils d’analytics se limitent au nombre de pages vues, Statify analyse la qualité de la lecture à travers un score d’engagement composite. Ce score permet d’identifier les pages qui captent véritablement l’attention de vos visiteurs et non simplement celles qui génèrent des clics.
 
-- **Au-delà du simple "clic"** : La plupart des outils considèrent une vue comme un succès. Statify **qualifie** cette vue : un visiteur qui reste 10 minutes mais ne scrolle pas est statistiquement différent d'un lecteur qui parcourt tout l'article en 30 secondes.
-- **Réduction du bruit (Loi de Wilson)** : C'est là que Statify se distingue. En utilisant la limite inférieure de l'intervalle de confiance de Wilson, nous éliminons l'anomalie des "petits nombres" (une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site avec 1000 vues et 80% d'engagement).
-- **Intelligence contextuelle** : Le score est **relatif à votre site**. Nous calculons la médiane réelle de vos contenus pour définir ce qu'est une lecture de "longue durée", là où les autres imposent des seuils arbitraires.
-- **Pondération Scientifique** : Le score final est une synthèse équilibrée : Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
+Pour y parvenir, Statify ne considère pas toutes les visites de la même manière. Un visiteur qui reste dix minutes sur une page sans faire défiler le contenu ne représente pas le même type de lecture qu’un lecteur qui parcourt l’article jusqu’au bout en quelques dizaines de secondes. En combinant plusieurs signaux comportementaux (durée de lecture, profondeur de scroll, engagement actif, fidélité des visiteurs et navigation au sein du site) Statify construit une vision beaucoup plus nuancée de la performance de chaque contenu.
+
+- **Réduction du bruit (Loi de Wilson)** 
+L’un des défis majeurs de l’analyse de données est le biais lié aux petits volumes. Une page qui reçoit une seule visite avec un engagement parfait pourrait apparaître artificiellement comme la meilleure page du site. Pour éviter ce type d’anomalie statistique, Statify applique la borne inférieure de l’intervalle de confiance de Wilson. Cette méthode réduit l’impact des petits échantillons et privilégie les contenus qui démontrent une performance solide sur un volume de données plus significatif.
+
+Le score est **relatif à votre site**. Nous calculons la médiane de vos contenus pour définir ce qu'est une lecture de longue durée, là où les autres imposent des seuils arbitraires. Les sessions sont ensuite évaluées par rapport à ces repères afin de produire un score plus pertinent.
+
+Le score final repose sur une pondération équilibrée de plusieurs indicateurs : la durée de lecture (22 %), la profondeur de scroll (20 %), les signaux d’engagement actif (20 %), la fidélité des visiteurs (18 %), la profondeur de navigation dans le site (12 %) et un facteur de confiance statistique (8 %). 
 
 ---
 
