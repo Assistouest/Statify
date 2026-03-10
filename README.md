@@ -5,7 +5,7 @@
 # Always Analytics
 ### Trackez-les tous, conformément au RGPD.
 
-**La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites et respecte la confidentialité de vos visiteurs, tout en respectant le RGPD.**
+**La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites et respecte la confidentialité de vos visiteurs.**
 
 [![Version](https://img.shields.io/badge/version-2.1.0-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
