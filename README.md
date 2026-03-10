@@ -21,7 +21,7 @@
 - **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
 - **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
 
-La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages" statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
+La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
 
 Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson dans les statistiques d'engagement.
 
@@ -31,8 +31,9 @@ Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieur
 | 🥈 **Optimisation PHP** | 500 | 75% | **71.4** | ✅ Solide |
 | 🥉 **Mettre à jour Ubuntu...** | 1 | 100% | **12.5** | ⚠️ Instable |
 
-Une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site affichant 1000 vues et 80% d'engagement. La stabilité statistique prime sur le pourcentage.
-
+> [!TIP]
+> Avec cet algorithme, une page avec peu de données est "punie" par l'incertitude. Elle ne montera dans vos tops que lorsqu'elle aura prouvé sa performance sur un volume de trafic significatif.
+> 
 Le score est calculé relativement à votre site. Always Analytics détermine la médiane  de vos contenus pour définir ce qu’est une lecture longue. Le score final est une synthèse de Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
 
 ---
