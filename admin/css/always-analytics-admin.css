@@ -652,3 +652,474 @@
 #eng-pages-table tbody td:last-child {
     padding: 10px 16px;
 }
+
+/* ============================================================
+   Bloc Référents — Filtrable
+   Sélecteurs ultra-spécifiques pour écraser les resets WP admin
+   ============================================================ */
+
+/* Header du bloc — row avec espace entre titre et tabs */
+.aa-wrap .aa-referrers-card .aa-ref-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 14px 20px !important;
+    border-bottom: 1px solid var(--aa-border) !important;
+}
+
+/* Conteneur des onglets */
+.aa-wrap .aa-referrers-card .aa-ref-tabs {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    background: var(--aa-bg) !important;
+    border-radius: 8px !important;
+    padding: 3px !important;
+    flex-shrink: 0 !important;
+    list-style: none !important;
+    margin: 0 !important;
+}
+
+/* Onglet individuel — span, pas un button, pour éviter tous les resets WP */
+.aa-wrap .aa-referrers-card .aa-ref-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 5px 12px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: var(--aa-text-secondary) !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    transition: background 0.16s, color 0.16s, box-shadow 0.16s !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    outline: none !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-tab:hover {
+    color: var(--aa-text) !important;
+    background: rgba(255,255,255,0.7) !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-tab--active,
+.aa-wrap .aa-referrers-card .aa-ref-tab.aa-ref-tab--active {
+    background: #ffffff !important;
+    color: var(--aa-primary) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 0 0 1px rgba(108,99,255,0.08) !important;
+}
+
+/* Badge compteur dans chaque onglet */
+.aa-wrap .aa-referrers-card .aa-ref-count {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    padding: 0 4px !important;
+    border-radius: 99px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    background: rgba(0,0,0,0.07) !important;
+    color: var(--aa-text-secondary) !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-tab--active .aa-ref-count {
+    background: rgba(108,99,255,0.13) !important;
+    color: var(--aa-primary) !important;
+}
+
+/* Corps — hauteur fixe, scroll interne */
+.aa-wrap .aa-referrers-card .aa-ref-body {
+    padding: 0 !important;
+    height: 416px !important;   /* 8 lignes × 52px — aligné avec les autres cards de la grille */
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    /* Scrollbar fine et discrète */
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--aa-border) transparent !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-body::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-body::-webkit-scrollbar-track {
+    background: transparent !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-body::-webkit-scrollbar-thumb {
+    background: var(--aa-border) !important;
+    border-radius: 99px !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-body::-webkit-scrollbar-thumb:hover {
+    background: var(--aa-text-secondary) !important;
+}
+
+/* ── Ligne ── */
+.aa-wrap .aa-referrers-card .aa-ref-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) 110px !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 10px 20px !important;
+    border-bottom: 1px solid var(--aa-border) !important;
+    min-height: 52px !important;
+    box-sizing: border-box !important;
+    transition: background 0.15s !important;
+    margin: 0 !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-row:last-child {
+    border-bottom: none !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-row:hover {
+    background: rgba(108, 99, 255, 0.03) !important;
+}
+
+/* Identité */
+.aa-wrap .aa-referrers-card .aa-ref-identity {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-icon {
+    flex-shrink: 0 !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 9px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+/* Favicon — chargé async */
+.aa-wrap .aa-referrers-card .aa-ref-favicon {
+    width: 18px !important;
+    height: 18px !important;
+    object-fit: contain !important;
+    display: block !important;
+    animation: aa-favicon-in 0.25s ease !important;
+}
+
+@keyframes aa-favicon-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+/* Fallback initiale colorée — visible uniquement si favicon échoue (display:none par défaut, géré inline) */
+.aa-wrap .aa-referrers-card .aa-ref-fallback {
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-labels {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-name {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: var(--aa-text) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-domain {
+    font-size: 11px !important;
+    color: var(--aa-text-secondary) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+}
+
+/* Barre de progression */
+.aa-wrap .aa-referrers-card .aa-ref-bar-wrap {
+    min-width: 0 !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-bar-track {
+    height: 6px !important;
+    background: var(--aa-border) !important;
+    border-radius: 99px !important;
+    overflow: hidden !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-bar-fill {
+    height: 100% !important;
+    border-radius: 99px !important;
+    transition: width 0.45s cubic-bezier(.4,0,.2,1) !important;
+    opacity: 0.7 !important;
+}
+
+/* Chiffres */
+.aa-wrap .aa-referrers-card .aa-ref-stats {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: flex-end !important;
+    gap: 2px !important;
+    flex-shrink: 0 !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-hits {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--aa-text) !important;
+    font-variant-numeric: tabular-nums !important;
+    display: block !important;
+}
+
+.aa-wrap .aa-referrers-card .aa-ref-uniq {
+    font-size: 11px !important;
+    color: var(--aa-text-secondary) !important;
+    font-variant-numeric: tabular-nums !important;
+    display: block !important;
+}
+
+/* État vide */
+.aa-wrap .aa-referrers-card .aa-ref-empty {
+    padding: 36px 20px !important;
+    text-align: center !important;
+    color: var(--aa-text-secondary) !important;
+    font-size: 13px !important;
+}
+
+/* Responsive */
+@media (max-width: 960px) {
+    .aa-wrap .aa-referrers-card .aa-ref-row {
+        grid-template-columns: minmax(0, 1fr) 100px !important;
+    }
+    .aa-wrap .aa-referrers-card .aa-ref-bar-wrap { display: none !important; }
+}
+
+@media (max-width: 640px) {
+    .aa-wrap .aa-referrers-card .aa-ref-tabs { flex-wrap: wrap !important; }
+    .aa-wrap .aa-referrers-card .aa-ref-tab  { font-size: 11px !important; padding: 4px 9px !important; }
+}
+
+/* ============================================================
+   Bloc Appareils & Navigateurs — Filtrable par device type
+   ============================================================ */
+
+.aa-wrap .aa-devices-card .aa-dev-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    flex-wrap: wrap !important;
+    gap: 10px !important;
+    padding: 14px 20px !important;
+    border-bottom: 1px solid var(--aa-border) !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-tabs {
+    display: flex !important;
+    align-items: center !important;
+    gap: 2px !important;
+    background: var(--aa-bg) !important;
+    border-radius: 8px !important;
+    padding: 3px !important;
+    flex-shrink: 0 !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-tab {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 5px 12px !important;
+    border: none !important;
+    border-radius: 6px !important;
+    background: transparent !important;
+    font-family: inherit !important;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    line-height: 1.4 !important;
+    color: var(--aa-text-secondary) !important;
+    cursor: pointer !important;
+    user-select: none !important;
+    white-space: nowrap !important;
+    transition: background 0.16s, color 0.16s, box-shadow 0.16s !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-tab:hover {
+    color: var(--aa-text) !important;
+    background: rgba(255,255,255,0.7) !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-tab--active {
+    background: #ffffff !important;
+    color: var(--aa-primary) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 0 0 1px rgba(108,99,255,0.08) !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-count-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 17px !important;
+    height: 17px !important;
+    padding: 0 4px !important;
+    border-radius: 99px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    line-height: 1 !important;
+    background: rgba(0,0,0,0.07) !important;
+    color: var(--aa-text-secondary) !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-tab--active .aa-dev-count-badge {
+    background: rgba(108,99,255,0.13) !important;
+    color: var(--aa-primary) !important;
+}
+
+/* Corps scrollable — même hauteur que les référents */
+.aa-wrap .aa-devices-card .aa-dev-body {
+    padding: 0 !important;
+    height: 416px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--aa-border) transparent !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-body::-webkit-scrollbar { width: 4px !important; }
+.aa-wrap .aa-devices-card .aa-dev-body::-webkit-scrollbar-track { background: transparent !important; }
+.aa-wrap .aa-devices-card .aa-dev-body::-webkit-scrollbar-thumb { background: var(--aa-border) !important; border-radius: 99px !important; }
+.aa-wrap .aa-devices-card .aa-dev-body::-webkit-scrollbar-thumb:hover { background: var(--aa-text-secondary) !important; }
+
+/* Titre de section (Navigateurs / Systèmes) */
+.aa-wrap .aa-devices-card .aa-dev-section-title {
+    padding: 10px 20px 6px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.6px !important;
+    color: var(--aa-text-secondary) !important;
+    background: var(--aa-bg) !important;
+    border-bottom: 1px solid var(--aa-border) !important;
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1 !important;
+}
+
+/* Ligne */
+.aa-wrap .aa-devices-card .aa-dev-row {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr) 60px !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 8px 20px !important;
+    border-bottom: 1px solid var(--aa-border) !important;
+    min-height: 44px !important;
+    box-sizing: border-box !important;
+    transition: background 0.15s !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-row:last-child { border-bottom: none !important; }
+.aa-wrap .aa-devices-card .aa-dev-row:hover { background: rgba(108,99,255,0.03) !important; }
+
+/* Identité */
+.aa-wrap .aa-devices-card .aa-dev-identity {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    min-width: 0 !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-icon {
+    flex-shrink: 0 !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 7px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-favicon {
+    width: 16px !important;
+    height: 16px !important;
+    object-fit: contain !important;
+    display: block !important;
+    animation: aa-favicon-in 0.25s ease !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-fallback {
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.aa-wrap .aa-devices-card .aa-dev-name {
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: var(--aa-text) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Barre */
+.aa-wrap .aa-devices-card .aa-dev-bar-wrap { min-width: 0 !important; }
+.aa-wrap .aa-devices-card .aa-dev-bar-track {
+    height: 5px !important;
+    background: var(--aa-border) !important;
+    border-radius: 99px !important;
+    overflow: hidden !important;
+}
+.aa-wrap .aa-devices-card .aa-dev-bar-fill {
+    height: 100% !important;
+    border-radius: 99px !important;
+    opacity: 0.7 !important;
+    transition: width 0.45s cubic-bezier(.4,0,.2,1) !important;
+}
+
+/* Chiffre */
+.aa-wrap .aa-devices-card .aa-dev-count {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: var(--aa-text) !important;
+    font-variant-numeric: tabular-nums !important;
+    text-align: right !important;
+}
+
+/* État vide */
+.aa-wrap .aa-devices-card .aa-dev-empty {
+    padding: 36px 20px !important;
+    text-align: center !important;
+    color: var(--aa-text-secondary) !important;
+    font-size: 13px !important;
+}
+
+@media (max-width: 960px) {
+    .aa-wrap .aa-devices-card .aa-dev-row { grid-template-columns: minmax(0,1fr) 50px !important; }
+    .aa-wrap .aa-devices-card .aa-dev-bar-wrap { display: none !important; }
+}
+
+@media (max-width: 640px) {
+    .aa-wrap .aa-devices-card .aa-dev-tabs { flex-wrap: wrap !important; }
+    .aa-wrap .aa-devices-card .aa-dev-tab  { font-size: 11px !important; padding: 4px 9px !important; }
+}

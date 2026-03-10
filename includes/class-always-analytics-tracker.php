@@ -17,13 +17,13 @@ class Always_Analytics_Tracker
 
         $options = get_option('always_analytics_options', array());
 
-        // ── IP ─────────────────────────────────────────────────────────────────
+        // ── IP ─────────────────────────────────────────────────────────────
         $ip = self::get_client_ip();
         if (self::is_excluded_ip($ip, $options)) {
             return false;
         }
 
-        // ── User-Agent & bot filter ────────────────────────────────────────────
+        // ── User-Agent & bot filter ──────────────────────────────────────────
         $ua_string = isset($_SERVER['HTTP_USER_AGENT'])
             ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']))
             : '';
@@ -33,25 +33,25 @@ class Always_Analytics_Tracker
             return false;
         }
 
-        // ── IP anonymisation ───────────────────────────────────────────────────
+        // ── IP anonymisation ────────────────────────────────────────────────
         $anonymize = !empty($options['anonymize_ip']);
         $ip_for_geo = $ip;
         if ($anonymize) {
             $ip = Always_Analytics_Privacy::anonymize_ip($ip);
         }
 
-        // ── Device info ────────────────────────────────────────────────────────
+        // ── Device info ────────────────────────────────────────────────────
         $device_info = self::parse_user_agent($ua_string);
 
-        // ── Géolocalisation ────────────────────────────────────────────────────
+        // ── Géolocalisation ─────────────────────────────────────────────────
         $geo = array('country_code' => '', 'region' => '', 'city' => '');
         if (!empty($options['geo_enabled'])) {
             $geo_provider = isset($options['geo_provider']) ? $options['geo_provider'] : 'native';
             $geolocation = new Always_Analytics_Geolocation($geo_provider, $options);
-            $geo = $geolocation->lookup($anonymize ? $ip : $ip_for_geo);
+            $geo = $geolocation->lookup($ip_for_geo);;
         }
 
-        // ── Visitor hash ───────────────────────────────────────────────────────
+        // ── Visitor hash ────────────────────────────────────────────────────
         $tracking_mode = isset($options['tracking_mode']) ? $options['tracking_mode'] : 'cookieless';
         // $effective_mode peut differrer de $tracking_mode si visitorId est absent
         // en mode cookie (fallback cookieless automatique - aucune visite perdue).
@@ -62,12 +62,12 @@ class Always_Analytics_Tracker
             return false;
         }
 
-        // ── Nouveau visiteur ? ─────────────────────────────────────────────────
+        // ── Nouveau visiteur ? ──────────────────────────────────────────────
         // Utilise $effective_mode : si fallback cookieless, is_new = lookup du jour
         // (pas lookup global qui serait faux sur un hash qui change chaque jour).
         $is_new = self::is_new_visitor($visitor_hash, $effective_mode);
 
-        // ── Post ID / type ─────────────────────────────────────────────────────
+        // ── Post ID / type ─────────────────────────────────────────────────
         $post_id = isset($data['postId']) ? absint($data['postId']) : 0;
         $post_type = '';
         if ($post_id > 0) {
@@ -76,7 +76,7 @@ class Always_Analytics_Tracker
                 $post_type = '';
         }
 
-        // ── Référent ───────────────────────────────────────────────────────────
+        // ── Référent ────────────────────────────────────────────────────────
         $referrer = isset($data['referrer']) ? esc_url_raw($data['referrer']) : '';
         $referrer_domain = '';
         if ($referrer) {
@@ -95,12 +95,12 @@ class Always_Analytics_Tracker
             }
         }
 
-        // ── Session ────────────────────────────────────────────────────────────
+        // ─ Session ────────────────────────────────────────────────────────
         $session_id = isset($data['sessionId']) && !empty($data['sessionId'])
             ? sanitize_text_field($data['sessionId'])
             : wp_generate_uuid4();
 
-        // ── Construction du hit ────────────────────────────────────────────────
+        // ── Construction du hit ─────────────────────────────────────────────
         $hit_data = array(
             'visitor_hash' => substr( $visitor_hash, 0, 64 ),
             'session_id' => substr( $session_id, 0, 64 ),
@@ -141,7 +141,7 @@ class Always_Analytics_Tracker
             return false;
         }
 
-        // ── Insertion ─────────────────────────────────────────────────────────
+        // ── Insertion ──────────────────────────────────────────────────────
         $table = $wpdb->prefix . 'aa_hits';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $inserted = $wpdb->insert($table, $hit_data);
@@ -152,7 +152,7 @@ class Always_Analytics_Tracker
 
         $hit_id = $wpdb->insert_id;
 
-        // ── Mise à jour de la session ──────────────────────────────────────────
+        // ── Mise à jour de la session ───────────────────────────────────────
         Always_Analytics_Session::update_session($session_id, $hit_data);
 
         do_action('always_analytics_after_track', $hit_id, $hit_data);
@@ -160,7 +160,7 @@ class Always_Analytics_Tracker
         return $hit_id;
     }
 
-    // ── Noscript tracker ──────────────────────────────────────────────────────
+    // ── Noscript tracker ──────────────────────────────────────────────────
 
     /**
      * Enregistre un hit minimal depuis le pixel <noscript>.
@@ -181,7 +181,7 @@ class Always_Analytics_Tracker
 
         $options = get_option('always_analytics_options', array());
 
-        // ── Bot filter ────────────────────────────────────────────────────────
+        // ── Bot filter ────────────────────────────────────────────────────
         $ua_string = isset($_SERVER['HTTP_USER_AGENT'])
             ? sanitize_text_field(wp_unslash($_SERVER['HTTP_USER_AGENT']))
             : '';
@@ -191,7 +191,7 @@ class Always_Analytics_Tracker
             return false;
         }
 
-        // ── IP — toujours anonymisée en noscript ──────────────────────────────
+        // ── IP — toujours anonymisée en noscript ────────────────────────────
         $ip = self::get_client_ip();
         if (self::is_excluded_ip($ip, $options)) {
             return false;
@@ -199,14 +199,14 @@ class Always_Analytics_Tracker
         $ip_anon = Always_Analytics_Privacy::anonymize_ip($ip);
         $ip_for_geo = $ip; // IP réelle pour la géoloc, avant anonymisation
 
-        // ── Hash cookieless standard ──────────────────────────────────────────
+        // ── Hash cookieless standard ───────────────────────────────────────
         $accept_lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
             ? sanitize_text_field(wp_unslash($_SERVER['HTTP_ACCEPT_LANGUAGE']))
             : '';
         $daily_salt = gmdate('Y-m-d');
         $visitor_hash = hash('sha256', $ip_anon . $ua_string . $accept_lang . $daily_salt);
 
-        // ── Déduplication : hit JS récent pour ce hash ? ──────────────────────
+        // ── Déduplication : hit JS récent pour ce hash ? ─────────────────────
         $table = $wpdb->prefix . 'aa_hits';
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
         $recent_js = $wpdb->get_var($wpdb->prepare(
@@ -221,10 +221,10 @@ class Always_Analytics_Tracker
             return false; // hit JS déjà présent — on ignore le pixel noscript
         }
 
-        // ── Device depuis UA ──────────────────────────────────────────────────
+        // ── Device depuis UA ───────────────────────────────────────────────
         $device_info = self::parse_user_agent($ua_string);
 
-        // ── Géolocalisation ───────────────────────────────────────────────────
+        // ─ Géolocalisation ────────────────────────────────────────────────
         $geo = array('country_code' => '', 'region' => '', 'city' => '');
         if (!empty($options['geo_enabled'])) {
             $geo_provider = isset($options['geo_provider']) ? $options['geo_provider'] : 'native';
@@ -232,10 +232,10 @@ class Always_Analytics_Tracker
             $geo = $geolocation->lookup($ip_for_geo);
         }
 
-        // ── Nouveau visiteur ──────────────────────────────────────────────────
+        // ── Nouveau visiteur ───────────────────────────────────────────────
         $is_new = self::is_new_visitor($visitor_hash, 'cookieless');
 
-        // ── URL / referrer ─────────────────────────────────────────────────────
+        // ── URL / referrer ──────────────────────────────────────────────────
         $page_url = isset($data['url']) ? esc_url_raw($data['url']) : '';
         $page_title = isset($data['title']) ? sanitize_text_field($data['title']) : '';
         $post_id = isset($data['postId']) ? absint($data['postId']) : 0;
@@ -253,11 +253,11 @@ class Always_Analytics_Tracker
             }
         }
 
-        // ── Session ID unique pour ce hit noscript ────────────────────────────
+        // ── Session ID unique pour ce hit noscript ───────────────────────────
         // Pas de sessionStorage disponible → chaque chargement de page est sa propre session.
         $session_id = 'noscript_' . wp_generate_uuid4();
 
-        // ── Hit data ──────────────────────────────────────────────────────────
+        // ─ Hit data ──────────────────────────────────────────────────────
         $hit_data = array(
             'visitor_hash' => substr( $visitor_hash, 0, 64 ),
             'session_id' => substr( $session_id, 0, 64 ),
@@ -309,7 +309,7 @@ class Always_Analytics_Tracker
         return $hit_id;
     }
 
-    // ── Pre-consent upgrade ───────────────────────────────────────────────────
+    // ── Pre-consent upgrade ─────────────────────────────────────────────────
 
     /**
      * Fusionne un hit pre_consent avec le hit cookie complet après acceptation.
@@ -365,7 +365,7 @@ class Always_Analytics_Tracker
         return (bool)$updated;
     }
 
-    // ── Scroll event ──────────────────────────────────────────────────────────
+    // ── Scroll event ───────────────────────────────────────────────────────
 
     /**
      * Enregistre un événement de scroll et met à jour la session.
@@ -443,7 +443,7 @@ class Always_Analytics_Tracker
         return true;
     }
 
-    // ── IP ─────────────────────────────────────────────────────────────────────
+    // ── IP ─────────────────────────────────────────────────────────────────
 
     /**
      * Récupère l'adresse IP du client de manière sécurisée.
@@ -538,7 +538,7 @@ class Always_Analytics_Tracker
         return in_array($ip, $excluded, true);
     }
 
-    // ── Visitor hash ───────────────────────────────────────────────────────────
+    // ─ Visitor hash ───────────────────────────────────────────────────────
 
     private static function generate_visitor_hash($ip, $ua_string, $tracking_mode, $data, &$effective_mode = null)
     {
@@ -549,24 +549,41 @@ class Always_Analytics_Tracker
                     $effective_mode = 'cookie';
                 return hash('sha256', sanitize_text_field($data['visitorId']));
             }
-            // Fallback cookieless : visitorId absent (cookie bloque, JS qui plante,
-            // bloqueur de pub, mode navigation privee...).
-            // On ne refuse plus le hit - on le capture avec un hash journalier
-            // exactement comme le mode cookieless, pour ne perdre aucune visite.
+            // Fallback cookieless : visitorId absent (cookie bloqué, bloqueur de pub…).
             if (null !== $effective_mode)
                 $effective_mode = 'cookieless';
         }
 
-        // Hash journalier SHA-256(IP_anonymisee + UA + Accept-Language + date UTC)
+        // ── Hash cookieless ─────────────────────────────────────────────────
+        // La fenêtre d'unicité est configurable dans les réglages :
+        //   'daily'   → SHA256(IP_anon + UA + Accept-Language + Y-m-d UTC)
+        //               Un visiteur unique par jour. Par défaut.
+        //   'session' → SHA256(IP_anon + UA + Accept-Language + sessionId JS)
+        //               Hash lié à la session navigateur, aucune persistance.
+        //               Recommandé par la CNIL pour le mode sans cookie.
+        $options = get_option('always_analytics_options', array());
+        $window  = isset($options['cookieless_window']) ? $options['cookieless_window'] : 'daily';
+
         $accept_lang = isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])
             ? sanitize_text_field(wp_unslash($_SERVER['HTTP_ACCEPT_LANGUAGE']))
             : '';
-        $daily_salt = gmdate('Y-m-d');
 
-        return hash('sha256', $ip . $ua_string . $accept_lang . $daily_salt);
+        if ('session' === $window) {
+            // Sel = sessionId envoyé par le tracker JS (sessionStorage, durée onglet).
+            // Si absent (noscript, fallback), on replie sur le sel journalier.
+            $session_id = isset($data['sessionId']) && !empty($data['sessionId'])
+                ? sanitize_text_field($data['sessionId'])
+                : gmdate('Y-m-d');
+            $salt = $session_id;
+        } else {
+            // daily (défaut)
+            $salt = gmdate('Y-m-d');
+        }
+
+        return hash('sha256', $ip . $ua_string . $accept_lang . $salt);
     }
 
-    // ── Nouveau visiteur ? ─────────────────────────────────────────────────────
+    // ── Nouveau visiteur ? ─────────────────────────────────────────────────
 
     /**
      * En mode cookie : "nouveau" = jamais vu ce visitor_hash dans la DB (toutes dates).
@@ -578,16 +595,26 @@ class Always_Analytics_Tracker
         global $wpdb;
         $table = $wpdb->prefix . 'aa_hits';
 
+        $options = get_option('always_analytics_options', array());
+        $window  = isset($options['cookieless_window']) ? $options['cookieless_window'] : 'daily';
+
         if ('cookie' === $tracking_mode) {
-            // En mode cookie le hash est permanent → "nouveau" = jamais vu
+            // Hash permanent → nouveau = jamais vu en base
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $count = $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} WHERE visitor_hash = %s LIMIT 1",
                 $visitor_hash
             ));
-        }
-        else {
-            // En mode cookieless le hash change chaque jour → "nouveau" = pas vu aujourd'hui UTC
+        } elseif ('session' === $window) {
+            // Hash lié à la session JS → par définition jamais vu (hash unique par session)
+            // On vérifie quand même pour se protéger contre les doublons (retry réseau, etc.)
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $count = $wpdb->get_var($wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table} WHERE visitor_hash = %s LIMIT 1",
+                $visitor_hash
+            ));
+        } else {
+            // daily (défaut) → nouveau = pas vu aujourd'hui UTC
             // phpcs:ignore WordPress.DB.DirectDatabaseQuery
             $count = $wpdb->get_var($wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table} WHERE visitor_hash = %s AND hit_at >= %s AND hit_at < %s LIMIT 1",
@@ -600,7 +627,7 @@ class Always_Analytics_Tracker
         return (0 === (int)$count);
     }
 
-    // ── User-Agent parsing ─────────────────────────────────────────────────────
+    // ── User-Agent parsing ──────────────────────────────────────────────────
 
     public static function parse_user_agent($ua)
     {
@@ -636,14 +663,32 @@ class Always_Analytics_Tracker
             }
         }
 
-        // Browser (ordre important : Edge avant Chrome)
+        // Browser — ordre critique : du plus spécifique au plus générique
         $browsers = array(
-            'Edge' => '/Edg[e\/]?\s?([\d.]+)/i',
-            'Firefox' => '/Firefox\/([\d.]+)/i',
-            'Chrome' => '/Chrome\/([\d.]+)/i',
-            'Safari' => '/Version\/([\d.]+).*Safari/i',
-            'Opera' => '/(?:Opera|OPR)\/([\d.]+)/i',
-            'IE' => '/(?:MSIE |Trident\/.*rv:)([\d.]+)/i',
+            // Chromium-based (avant Chrome pour éviter faux positifs)
+            'Edge'            => '/Edg[e\/]?\s?([\d.]+)/i',
+            'Opera GX'        => '/OPR\/([\d.]+).*OPG|OPG.*OPR\/([\d.]+)/i',
+            'Opera Mini'      => '/Opera Mini\/([\d.]+)/i',
+            'Opera'           => '/(?:Opera|OPR)\/([\d.]+)/i',
+            'Samsung Browser' => '/SamsungBrowser\/([\d.]+)/i',
+            'Yandex Browser'  => '/YaBrowser\/([\d.]+)/i',
+            'Brave'           => '/Brave\/([\d.]+)/i',
+            'Vivaldi'         => '/Vivaldi\/([\d.]+)/i',
+            'DuckDuckGo'      => '/DuckDuckGo\/([\d.]+)/i',
+            'Puffin'          => '/Puffin\/([\d.]+)/i',
+            'UCBrowser'       => '/UCBrowser\/([\d.]+)/i',
+            'QQ Browser'      => '/MQQBrowser\/([\d.]+)/i',
+            'Baidu Browser'   => '/baidubrowser\/([\d.]+)/i',
+            'Silk'            => '/Silk\/([\d.]+)/i',
+            // Chrome doit être après tous les Chromium dérivés
+            'Chrome'          => '/Chrome\/([\d.]+)/i',
+            // Firefox et dérivés
+            'Firefox Focus'   => '/Focus\/([\d.]+)/i',
+            'Firefox'         => '/Firefox\/([\d.]+)/i',
+            // Safari en dernier car son token apparaît dans beaucoup d'UA Chromium
+            'Safari'          => '/Version\/([\d.]+).*Safari/i',
+            // Legacy
+            'IE'              => '/(?:MSIE |Trident\/.*rv:)([\d.]+)/i',
         );
         foreach ($browsers as $name => $pattern) {
             if (preg_match($pattern, $ua, $m)) {
@@ -653,21 +698,40 @@ class Always_Analytics_Tracker
             }
         }
 
-        // OS
+        // OS — ordre : iOS avant macOS (iOS UA contient aussi "Mac OS X")
         $os_list = array(
-            'Windows 10' => '/Windows NT 10/i',
-            'Windows 8.1' => '/Windows NT 6\.3/i',
-            'Windows 8' => '/Windows NT 6\.2/i',
-            'Windows 7' => '/Windows NT 6\.1/i',
-            'macOS' => '/Mac OS X ([\d_]+)/i',
-            'iOS' => '/OS ([\d_]+) like Mac OS X/i',
-            'Android' => '/Android ([\d.]+)/i',
-            'Linux' => '/Linux/i',
-            'Chrome OS' => '/CrOS/i',
+            // Apple mobile/desktop — iOS avant macOS obligatoire
+            'iOS'          => '/OS ([\d_]+) like Mac OS X/i',
+            'iPadOS'       => '/iPad.*OS ([\d_]+)/i',
+            'macOS'        => '/Mac OS X ([\d_]+)/i',
+            // Windows — versions spécifiques avant le générique
+            'Windows 11'   => '/Windows NT 10\.0.*Win64/i',
+            'Windows 10'   => '/Windows NT 10/i',
+            'Windows 8.1'  => '/Windows NT 6\.3/i',
+            'Windows 8'    => '/Windows NT 6\.2/i',
+            'Windows 7'    => '/Windows NT 6\.1/i',
+            'Windows Vista'=> '/Windows NT 6\.0/i',
+            'Windows XP'   => '/Windows NT 5\.1/i',
+            'Windows Phone'=> '/Windows Phone/i',
+            // Android
+            'Android'      => '/Android ([\d.]+)/i',
+            // Linux distros — avant Linux générique
+            'Ubuntu'       => '/Ubuntu/i',
+            'Fedora'       => '/Fedora/i',
+            'Debian'       => '/Debian/i',
+            'Linux Mint'   => '/Linux Mint/i',
+            'Chrome OS'    => '/CrOS/i',
+            'Linux'        => '/Linux/i',
+            // Autres
+            'BlackBerry'   => '/BlackBerry/i',
+            'Symbian'      => '/Symbian/i',
+            'KaiOS'        => '/KAIOS/i',
+            'Tizen'        => '/Tizen/i',
+            'HarmonyOS'    => '/HarmonyOS/i',
         );
         foreach ($os_list as $name => $pattern) {
             if (preg_match($pattern, $ua, $m)) {
-                $result['os'] = preg_replace('/\s*[\d.]+$/', '', $name);
+                $result['os'] = $name;
                 if (isset($m[1]))
                     $result['os_version'] = str_replace('_', '.', $m[1]);
                 break;

@@ -107,12 +107,12 @@ class Always_Analytics_Admin {
             return;
         }
 
-        // CSS
+        // CSS — version = timestamp fichier (cache busting automatique à chaque déploiement)
         wp_enqueue_style(
             'always-analytics-admin',
             AA_PLUGIN_URL . 'admin/css/always-analytics-admin.css',
             array(),
-            AA_VERSION
+            filemtime( AA_PLUGIN_DIR . 'admin/css/always-analytics-admin.css' )
         );
 
         // Chart.js (local)
@@ -129,7 +129,7 @@ class Always_Analytics_Admin {
             'always-analytics-charts',
             AA_PLUGIN_URL . 'admin/js/always-analytics-charts.js',
             array( 'chartjs' ),
-            AA_VERSION,
+            filemtime( AA_PLUGIN_DIR . 'admin/js/always-analytics-charts.js' ),
             true
         );
 
@@ -138,23 +138,28 @@ class Always_Analytics_Admin {
             'always-analytics-admin',
             AA_PLUGIN_URL . 'admin/js/always-analytics-admin.js',
             array( 'always-analytics-charts', 'wp-api-fetch' ),
-            AA_VERSION,
+            filemtime( AA_PLUGIN_DIR . 'admin/js/always-analytics-admin.js' ),
             true
         );
 
+        // Chargement des sources référents depuis le fichier de données
+        $referrer_sources_file = AA_PLUGIN_DIR . 'data/referrer-sources.php';
+        $referrer_sources = file_exists( $referrer_sources_file ) ? include $referrer_sources_file : array();
+
         wp_localize_script( 'always-analytics-admin', 'alwaysAnalyticsAdmin', array(
-            'restBase'    => esc_url_raw( rest_url( 'always-analytics/v1/' ) ),
-            'nonce'       => wp_create_nonce( 'wp_rest' ),
-            'exportNonce' => wp_create_nonce( 'always_analytics_export' ),
-            'purgeNonce'  => wp_create_nonce( 'always_analytics_manual_purge' ),
-            'ajaxUrl'     => admin_url( 'admin-ajax.php' ),
-            'i18n'        => array(
-                'visitors'   => __( 'Visiteurs', 'always-analytics' ),
-                'pageViews'  => __( 'Pages vues', 'always-analytics' ),
-                'sessions'   => __( 'Sessions', 'always-analytics' ),
-                'noData'     => __( 'Aucune donnée pour cette période', 'always-analytics' ),
-                'loading'    => __( 'Chargement…', 'always-analytics' ),
-                'export'     => __( 'Exporter', 'always-analytics' ),
+            'restBase'        => esc_url_raw( rest_url( 'always-analytics/v1/' ) ),
+            'nonce'           => wp_create_nonce( 'wp_rest' ),
+            'exportNonce'     => wp_create_nonce( 'always_analytics_export' ),
+            'purgeNonce'      => wp_create_nonce( 'always_analytics_manual_purge' ),
+            'ajaxUrl'         => admin_url( 'admin-ajax.php' ),
+            'referrerSources' => $referrer_sources,
+            'i18n'            => array(
+                'visitors'      => __( 'Visiteurs', 'always-analytics' ),
+                'pageViews'     => __( 'Pages vues', 'always-analytics' ),
+                'sessions'      => __( 'Sessions', 'always-analytics' ),
+                'noData'        => __( 'Aucune donnée pour cette période', 'always-analytics' ),
+                'loading'       => __( 'Chargement…', 'always-analytics' ),
+                'export'        => __( 'Exporter', 'always-analytics' ),
                 'purgeConfirm'  => __( 'Cela va anonymiser les données plus anciennes que la période de rétention. Continuer ?', 'always-analytics' ),
                 'purgeSuccess'  => __( 'Anonymisation terminée avec succès.', 'always-analytics' ),
                 'purgeError'    => __( 'Erreur lors de l\'anonymisation.', 'always-analytics' ),

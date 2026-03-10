@@ -56,6 +56,9 @@ class Always_Analytics_Settings
             array('field' => 'anonymize_ip', 'desc' => __('Masquer le dernier octet IPv4 / derniers 80 bits IPv6', 'always-analytics'))
         );
 
+        add_settings_field('cookieless_window', __('Fenêtre d\'unicité (mode sans cookie)', 'always-analytics'),
+            array($this, 'render_cookieless_window'), 'always-analytics-settings', 'aa_privacy');
+
         add_settings_field('retention_days', __('Durée de rétention', 'always-analytics'),
             array($this, 'render_retention'), 'always-analytics-settings', 'aa_privacy');
 
@@ -146,6 +149,7 @@ class Always_Analytics_Settings
         $output['tracking_mode'] = isset($input['tracking_mode']) && in_array($input['tracking_mode'], array('cookieless', 'cookie'), true) ? $input['tracking_mode'] : 'cookieless';
         $output['bot_filter_mode'] = isset($input['bot_filter_mode']) && in_array($input['bot_filter_mode'], array('strict', 'normal', 'off'), true) ? $input['bot_filter_mode'] : 'normal';
         $output['export_format'] = isset($input['export_format']) && in_array($input['export_format'], array('csv', 'json'), true) ? $input['export_format'] : 'csv';
+        $output['cookieless_window'] = isset($input['cookieless_window']) && in_array($input['cookieless_window'], array('daily', 'session'), true) ? $input['cookieless_window'] : 'daily';
 
         // Numbers
         $output['retention_days'] = isset($input['retention_days']) ? absint($input['retention_days']) : 90;
@@ -304,6 +308,31 @@ class Always_Analytics_Settings
         </select>
         <p class="description">
             <?php esc_html_e('Après cette période, les données sont anonymisées (pas supprimées). Les statistiques agrégées et les métriques de distribution sont conservées indéfiniment.', 'always-analytics'); ?>
+        </p>
+        <?php
+    }
+
+    public function render_cookieless_window()
+    {
+        $options = get_option('always_analytics_options', array());
+        $window  = isset($options['cookieless_window']) ? $options['cookieless_window'] : 'daily';
+?>
+        <fieldset>
+            <label style="display:block;margin-bottom:8px;">
+                <input type="radio" name="always_analytics_options[cookieless_window]" value="daily" <?php checked($window, 'daily'); ?> />
+                <strong><?php esc_html_e('Journalière (Y-m-d)', 'always-analytics'); ?></strong>
+                &nbsp;—&nbsp;
+                <span class="description"><?php esc_html_e('Un visiteur unique par jour. Hash recalculé chaque minuit UTC. Meilleure précision des métriques.', 'always-analytics'); ?></span>
+            </label>
+            <label style="display:block;">
+                <input type="radio" name="always_analytics_options[cookieless_window]" value="session" <?php checked($window, 'session'); ?> />
+                <strong><?php esc_html_e('Session uniquement', 'always-analytics'); ?></strong>
+                &nbsp;—&nbsp;
+                <span class="description"><?php esc_html_e('Hash lié à la session navigateur (sessionStorage). Aucune persistance entre onglets ou après fermeture. Recommandé par la CNIL pour le mode sans cookie.', 'always-analytics'); ?></span>
+            </label>
+        </fieldset>
+        <p class="description" style="margin-top:8px;color:#b32d2e;">
+            ⚠️ <?php esc_html_e('S\'applique au mode sans cookie et au mode pré-consentement RGPD. Sans effet si un cookie visitorId est présent.', 'always-analytics'); ?>
         </p>
         <?php
     }

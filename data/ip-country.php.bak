@@ -1,0 +1,151 @@
+<?php
+/**
+ * IP-to-Country lookup table (Comprehensive & Sorted).
+ * Couvre les blocs majeurs mondiaux, les FAI principaux (FR/EU/US) et les gros VPNs.
+ * Obligatoirement trié par 's' croissant pour la recherche dichotomique.
+ */
+
+return array(
+    // === ASIE / OCÉANIE (APNIC) ===
+    array( 's' => ip2long('1.0.0.0'),      'e' => ip2long('1.0.0.255'),      'cc' => 'AU' ), // Cloudflare Labs
+    array( 's' => ip2long('1.1.1.0'),      'e' => ip2long('1.1.1.255'),      'cc' => 'AU' ), // Cloudflare DNS
+    array( 's' => ip2long('1.2.0.0'),      'e' => ip2long('1.3.255.255'),    'cc' => 'CN' ), // China Telecom
+    array( 's' => ip2long('1.32.0.0'),     'e' => ip2long('1.32.255.255'),   'cc' => 'HK' ), // Hong Kong Broadband
+    array( 's' => ip2long('1.64.0.0'),     'e' => ip2long('1.71.255.255'),   'cc' => 'JP' ), // NTT Japan
+
+    // === EUROPE (RIPE NCC) & US (ARIN) - Blocs de base ===
+    array( 's' => ip2long('2.0.0.0'),      'e' => ip2long('2.15.255.255'),   'cc' => 'FR' ), // Orange / Free FAI Mix
+    array( 's' => ip2long('2.16.0.0'),     'e' => ip2long('2.31.255.255'),   'cc' => 'DE' ), // Deutsche Telekom
+    array( 's' => ip2long('3.0.0.0'),      'e' => ip2long('3.255.255.255'),  'cc' => 'US' ), // AWS (Amazon Web Services)
+    array( 's' => ip2long('4.0.0.0'),      'e' => ip2long('4.255.255.255'),  'cc' => 'US' ), // Level 3 / Lumen
+    
+    // === EUROPE / FRANCE (OVH & FAI) ===
+    array( 's' => ip2long('5.39.0.0'),     'e' => ip2long('5.39.255.255'),   'cc' => 'FR' ), // OVH
+    array( 's' => ip2long('5.135.0.0'),    'e' => ip2long('5.135.255.255'),  'cc' => 'FR' ), // OVH
+    array( 's' => ip2long('5.196.0.0'),    'e' => ip2long('5.196.255.255'),  'cc' => 'FR' ), // OVH
+    
+    // === US (DoD / Google / AT&T) ===
+    array( 's' => ip2long('6.0.0.0'),      'e' => ip2long('7.255.255.255'),  'cc' => 'US' ), // US DoD
+    array( 's' => ip2long('8.0.0.0'),      'e' => ip2long('8.127.255.255'),  'cc' => 'US' ), // Level 3
+    array( 's' => ip2long('8.8.4.0'),      'e' => ip2long('8.8.4.255'),      'cc' => 'US' ), // Google DNS
+    array( 's' => ip2long('8.8.8.0'),      'e' => ip2long('8.8.8.255'),      'cc' => 'US' ), // Google DNS
+    array( 's' => ip2long('9.0.0.0'),      'e' => ip2long('9.255.255.255'),  'cc' => 'US' ), // IBM
+    array( 's' => ip2long('11.0.0.0'),     'e' => ip2long('11.255.255.255'), 'cc' => 'US' ), // US DoD
+    array( 's' => ip2long('12.0.0.0'),     'e' => ip2long('12.255.255.255'), 'cc' => 'US' ), // AT&T
+    array( 's' => ip2long('13.0.0.0'),     'e' => ip2long('13.255.255.255'), 'cc' => 'US' ), // Microsoft / Xerox
+
+    // === ASIE (APNIC) ===
+    array( 's' => ip2long('14.0.0.0'),     'e' => ip2long('14.255.255.255'), 'cc' => 'IN' ), // Inde (Airtel/Jio Mix)
+    
+    // === US (Apple / HP / Ford) ===
+    array( 's' => ip2long('15.0.0.0'),     'e' => ip2long('16.255.255.255'), 'cc' => 'US' ), // HP / DEC
+    array( 's' => ip2long('17.0.0.0'),     'e' => ip2long('17.255.255.255'), 'cc' => 'US' ), // Apple Inc.
+    array( 's' => ip2long('18.0.0.0'),     'e' => ip2long('18.255.255.255'), 'cc' => 'US' ), // MIT
+    array( 's' => ip2long('19.0.0.0'),     'e' => ip2long('19.255.255.255'), 'cc' => 'US' ), // Ford
+    array( 's' => ip2long('20.0.0.0'),     'e' => ip2long('20.255.255.255'), 'cc' => 'US' ), // Microsoft Azure
+
+    // === US & CANADA (Fournisseurs d'accès) ===
+    array( 's' => ip2long('23.0.0.0'),     'e' => ip2long('23.255.255.255'), 'cc' => 'US' ), // Akamai / FAI
+    array( 's' => ip2long('24.0.0.0'),     'e' => ip2long('24.199.255.255'), 'cc' => 'US' ), // Comcast / Cox Cable
+    array( 's' => ip2long('24.200.0.0'),   'e' => ip2long('24.203.255.255'), 'cc' => 'CA' ), // Videotron Canada
+    array( 's' => ip2long('24.204.0.0'),   'e' => ip2long('24.255.255.255'), 'cc' => 'US' ), // Spectrum / Time Warner
+
+    // === EUROPE / UK ===
+    array( 's' => ip2long('25.0.0.0'),     'e' => ip2long('25.255.255.255'), 'cc' => 'GB' ), // UK MoD / Gov
+    
+    // === US & EUROPE MIX ===
+    array( 's' => ip2long('31.0.0.0'),     'e' => ip2long('31.255.255.255'), 'cc' => 'EU' ), // RIPE Europe Mobile Broad
+    array( 's' => ip2long('34.0.0.0'),     'e' => ip2long('35.255.255.255'), 'cc' => 'US' ), // Google Cloud / AWS
+
+    // === FRANCE (Bouygues) ===
+    array( 's' => ip2long('37.160.0.0'),   'e' => ip2long('37.175.255.255'), 'cc' => 'FR' ), // Bouygues Mobile
+    
+    // === US & AFRIQUE ===
+    array( 's' => ip2long('38.0.0.0'),     'e' => ip2long('38.255.255.255'), 'cc' => 'US' ), // Cogent
+    array( 's' => ip2long('41.0.0.0'),     'e' => ip2long('41.255.255.255'), 'cc' => 'AF' ), // AFRINIC (Bloc principal Afrique)
+    array( 's' => ip2long('44.0.0.0'),     'e' => ip2long('44.255.255.255'), 'cc' => 'US' ), // Amateur Radio (AMPRNet)
+
+    // === EUROPE (DE, IT, ES) ===
+    array( 's' => ip2long('46.0.0.0'),     'e' => ip2long('46.255.255.255'), 'cc' => 'EU' ), // RIPE (Bloc majeur UE)
+    
+    // === ASIE (Japon, Chine) ===
+    array( 's' => ip2long('49.0.0.0'),     'e' => ip2long('49.255.255.255'), 'cc' => 'AP' ), // APNIC Mix
+    array( 's' => ip2long('58.0.0.0'),     'e' => ip2long('61.255.255.255'), 'cc' => 'AP' ), // APNIC (Japon/Chine/Corée)
+
+    // === US (Verizon, AT&T) ===
+    array( 's' => ip2long('64.0.0.0'),     'e' => ip2long('72.13.255.255'),  'cc' => 'US' ), // ARIN FAI divers
+    array( 's' => ip2long('72.14.0.0'),    'e' => ip2long('72.14.255.255'),  'cc' => 'US' ), // Google
+    array( 's' => ip2long('72.15.0.0'),    'e' => ip2long('76.255.255.255'), 'cc' => 'US' ), // Comcast/Verizon
+
+    // === FRANCE (SFR, Free, Orange) & EUROPE ===
+    array( 's' => ip2long('77.128.0.0'),   'e' => ip2long('77.159.255.255'), 'cc' => 'FR' ), // SFR
+    array( 's' => ip2long('78.112.0.0'),   'e' => ip2long('78.127.255.255'), 'cc' => 'FR' ), // Free
+    array( 's' => ip2long('79.0.0.0'),     'e' => ip2long('79.255.255.255'), 'cc' => 'EU' ), // RIPE Europe
+    array( 's' => ip2long('80.10.0.0'),    'e' => ip2long('80.15.255.255'),  'cc' => 'FR' ), // Orange
+    array( 's' => ip2long('81.0.0.0'),     'e' => ip2long('81.255.255.255'), 'cc' => 'EU' ), // RIPE Europe
+    array( 's' => ip2long('82.64.0.0'),    'e' => ip2long('82.65.255.255'),  'cc' => 'FR' ), // Freebox
+    array( 's' => ip2long('83.0.0.0'),     'e' => ip2long('89.255.255.255'), 'cc' => 'EU' ), // RIPE Europe FAI
+    array( 's' => ip2long('90.0.0.0'),     'e' => ip2long('90.127.255.255'), 'cc' => 'FR' ), // Orange ADSL/Fibre
+    array( 's' => ip2long('91.68.0.0'),    'e' => ip2long('91.68.255.255'),  'cc' => 'FR' ), // SFR
+    array( 's' => ip2long('92.128.0.0'),   'e' => ip2long('92.184.255.255'), 'cc' => 'FR' ), // Orange Mobile (Sosh)
+    array( 's' => ip2long('93.0.0.0'),     'e' => ip2long('95.255.255.255'), 'cc' => 'EU' ), // RIPE Europe
+
+    // === US & CA (Cloudflare) ===
+    array( 's' => ip2long('96.0.0.0'),     'e' => ip2long('100.255.255.255'),'cc' => 'US' ), // ARIN ISP Mix
+
+    // === ASIE / OCÉANIE ===
+    array( 's' => ip2long('101.0.0.0'),    'e' => ip2long('101.97.255.255'), 'cc' => 'CN' ), // China Mobile
+    array( 's' => ip2long('101.98.0.0'),   'e' => ip2long('101.98.255.255'), 'cc' => 'NZ' ), // Spark New Zealand
+    array( 's' => ip2long('101.99.0.0'),   'e' => ip2long('101.255.255.255'),'cc' => 'AP' ), // APNIC Mix
+
+    // === AFRIQUE ===
+    array( 's' => ip2long('102.0.0.0'),    'e' => ip2long('102.255.255.255'),'cc' => 'ZA' ), // Liquid Telecom South Africa
+
+    // === VPNs & PROXIES (Apple, Cloudflare) ===
+    array( 's' => ip2long('103.0.0.0'),    'e' => ip2long('103.255.255.255'),'cc' => 'AP' ), // APNIC Mix
+    array( 's' => ip2long('104.0.0.0'),    'e' => ip2long('104.27.255.255'), 'cc' => 'US' ), // Cloudflare
+    array( 's' => ip2long('104.28.0.0'),   'e' => ip2long('104.28.255.255'), 'cc' => 'VP' ), // Apple Private Relay (iCloud VPN)
+    array( 's' => ip2long('104.29.0.0'),   'e' => ip2long('104.255.255.255'),'cc' => 'US' ), // Cloudflare
+
+    // === ASIE ===
+    array( 's' => ip2long('110.0.0.0'),    'e' => ip2long('111.255.255.255'),'cc' => 'CN' ), // APNIC China
+    array( 's' => ip2long('112.0.0.0'),    'e' => ip2long('112.255.255.255'),'cc' => 'KR' ), // South Korea
+
+    // === AFRIQUE (Egypte) ===
+    array( 's' => ip2long('156.192.0.0'),  'e' => ip2long('156.223.255.255'),'cc' => 'EG' ), // TE Data Egypt
+
+    // === VPNs (Tor) ===
+    array( 's' => ip2long('162.247.72.0'), 'e' => ip2long('162.247.75.255'), 'cc' => 'VP' ), // Tor Exit Nodes
+
+    // === VPNs (Apple Private Relay) ===
+    array( 's' => ip2long('172.224.0.0'),  'e' => ip2long('172.255.255.255'),'cc' => 'VP' ), // Apple Private Relay
+
+    // === FRANCE (Bouygues) & AMÉRIQUE LATINE ===
+    array( 's' => ip2long('176.128.0.0'),  'e' => ip2long('176.191.255.255'),'cc' => 'FR' ), // Bouygues Telecom
+    array( 's' => ip2long('177.0.0.0'),    'e' => ip2long('177.255.255.255'),'cc' => 'BR' ), // Brazil (Vivo/Telefônica)
+    array( 's' => ip2long('181.1.0.0'),    'e' => ip2long('181.1.255.255'),  'cc' => 'AR' ), // Argentina Telecom
+    
+    // === EUROPE / VPNs LOURDS ===
+    array( 's' => ip2long('185.0.0.0'),    'e' => ip2long('185.159.155.255'),'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('185.159.156.0'),'e' => ip2long('185.159.159.255'),'cc' => 'VP' ), // Proton VPN
+    array( 's' => ip2long('185.159.160.0'),'e' => ip2long('185.199.255.255'),'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('185.200.116.0'),'e' => ip2long('185.200.119.255'),'cc' => 'VP' ), // M247 (NordVPN / Surfshark)
+    array( 's' => ip2long('185.200.120.0'),'e' => ip2long('185.213.151.255'),'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('185.213.152.0'),'e' => ip2long('185.213.155.255'),'cc' => 'VP' ), // Mullvad VPN
+    array( 's' => ip2long('185.213.156.0'),'e' => ip2long('185.225.231.255'),'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('185.225.232.0'),'e' => ip2long('185.225.235.255'),'cc' => 'VP' ), // Datacamp (VPNs)
+    array( 's' => ip2long('185.225.236.0'),'e' => ip2long('185.255.255.255'),'cc' => 'EU' ), // RIPE
+
+    // === AMÉRIQUE LATINE ===
+    array( 's' => ip2long('186.0.0.0'),    'e' => ip2long('186.255.255.255'),'cc' => 'CL' ), // Chile / Latam
+
+    // === VPNs & FAI FRANCE ===
+    array( 's' => ip2long('193.0.0.0'),    'e' => ip2long('193.25.15.255'),  'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('193.25.16.0'),  'e' => ip2long('193.25.19.255'),  'cc' => 'VP' ), // M247 (VPNs)
+    array( 's' => ip2long('193.25.20.0'),  'e' => ip2long('194.1.255.255'),  'cc' => 'EU' ), // RIPE
+    array( 's' => ip2long('194.2.0.0'),    'e' => ip2long('194.2.255.255'),  'cc' => 'FR' ), // Oléane / Orange Business Services
+
+    // === AFRIQUE ===
+    array( 's' => ip2long('197.0.0.0'),    'e' => ip2long('197.209.255.255'),'cc' => 'AF' ), // AFRINIC Mix
+    array( 's' => ip2long('197.210.0.0'),  'e' => ip2long('197.210.255.255'),'cc' => 'NG' ), // MTN Nigeria
+);

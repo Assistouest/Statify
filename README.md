@@ -3,11 +3,11 @@
 <img src="always-analytics.svg" alt="Statify Logo" width="60" />
 
 # Always Analytics
-### Reprenez le contrôle de vos analytics. Sans compromis.
+### Trackez-les tous, conformément au RGPD.
 
-**La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites, tout en respectant scrupuleusement le RGPD.**
+**La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites et respecte la confidentialité de vos visiteurs.**
 
-[![Version](https://img.shields.io/badge/version-2.1.0-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
+[![Version](https://img.shields.io/badge/version-2.3.0-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
@@ -21,20 +21,29 @@
 - **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
 - **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
 
-Contrairement à Yoast SEO ou Google Analytics, Always Analytics traite chaque vue avec une intelligence contextuelle.
+La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
 
-Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson :
+Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson dans les statistiques d'engagement.
 
-Une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site affichant 1000 vues et 80% d'engagement. La stabilité statistique prime sur le pourcentage.
+| Page | Sessions | Engag. Brut | Score Wilson | État |
+| :--- | :---: | :---: | :---: | :--- |
+| 🥇 **Guide Pilier : Sécurité** | 1 000 | 80% | **78.2** | ✅ Fiable |
+| 🥈 **Optimisation PHP** | 500 | 75% | **71.4** | ✅ Solide |
+| 🥉 **Mettre à jour Ubuntu...** | 1 | 100% | **12.5** | ⚠️ Instable |
 
-| Page | Score | 🕒 Durée | ⬇ Scroll | ✅ Engag. | 🔁 Retour | 📄 Profond. | 📊 Sessions |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **Mettre à jour Ubuntu...** | **53** | 14m 54s | 100% | 100% | 0% | 3 p. | 1 sess. |
-| 🥈 **Enable automatic updates...** | **47** | 14m 54s | 100% | 100% | 0% | — | 1 sess. |
-| 🥉 **How to fully update...** | **47** | -- | -- | -- | -- | -- | -- |
+> [!TIP]
+> Avec cet algorithme, une page avec peu de données est punie par l'incertitude. Elle ne montera dans vos tops que lorsqu'elle aura prouvé sa performance sur un volume de trafic significatif.
 
+Pour obtenir le **Score Final ($S_{final}$)**, nous appliquons la correction de Wilson sur la performance brute ($P$) afin de punir l'incertitude des petits échantillons :
 
-Le score est calculé relativement à votre site. Always Analytics détermine la médiane  de vos contenus pour définir ce qu’est une lecture longue. Le score final est une synthèse de Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
+$$S_{final} = \frac{P + \frac{z^2}{2n} - z \sqrt{\frac{P(1-P)}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
+
+*Où :*
+* **$P$** est la performance brute (synthèse pondérée des 5 signaux ci-dessous).
+* **$n$** est le nombre de sessions (taille de l'échantillon).
+* **$z$** est le niveau de confiance (1.96 pour 95%).
+
+Le score est calculé relativement à votre site. Always Analytics détermine la médiane de vos contenus pour définir ce qu'est une lecture longue. Le score final est une synthèse de Durée (~24%) • Scroll (~22%) • Engagement (~22%) • Fidélité (~20%) • Profondeur (~13%).
 
 ---
 
@@ -42,25 +51,25 @@ Le score est calculé relativement à votre site. Always Analytics détermine la
 
 La plupart des analytics conditionnent le tracking au consentement : pas de cookie accepté = visite perdue. Always Analytics fonctionne à l'envers.
 
-> **Le cookieless est le socle. Le cookie est un enrichissement optionnel.**
+> **Le suivi sans cookie constitue la base, le cookie n’intervient qu’en option.**
 
-Peu importe ce que fait le visiteur — accepter, refuser, fermer la bannière, bloquer les cookies, désactiver JS — une visite est toujours enregistrée. Le consentement ne décide pas si la visite est comptée. Il décide uniquement si le visiteur peut être reconnu lors de sa prochaine visite.
+Peu importe ce que fait le visiteur (accepter, refuser, fermer la bannière, bloquer les cookies, désactiver JS) une visite est toujours enregistrée. Le consentement ne décide pas si la visite est comptée. Il décide uniquement si le visiteur peut être reconnu lors de sa prochaine visite.
 
 ---
 
 ## Les trois modes
 
-### Mode 1 — Cookieless
+### Mode 1. Cookieless
 
 Aucun cookie. Aucune bannière. Démarre immédiatement.
 
 Chaque visiteur est identifié par un hash journalier calculé côté serveur :
 
 ```
-SHA-256( IP_anonymisée + User-Agent + Accept-Language + date_UTC )
+SHA256(IP_anon + UA + Accept-Language + Y-m-d)
 ```
 
-Le hash change chaque nuit à minuit UTC. Le même visiteur produit un hash identique toute la journée, et un hash différent le lendemain. Il n'est jamais persisté sur l'appareil du visiteur.
+Le hash change chaque jour. Le même visiteur produit un hash identique toute ta journée et un hash différent le jour suivant.
 
 ## Données collectées
 
@@ -85,7 +94,7 @@ Le hash change chaque nuit à minuit UTC. Le même visiteur produit un hash iden
 
 ---
 
-### Mode 2 — Cookie + Bannière RGPD
+### Mode 2. Cookie + Bannière RGPD
 
 C'est le Mode 1 augmenté. Le cookieless tourne en permanence en dessous. La bannière et le cookie viennent s'ajouter par-dessus.
 
@@ -149,7 +158,7 @@ Si `null` est retourné, le hit est envoyé sans `visitorId`. Le serveur détect
 
 ---
 
-### Mode 3 — Cookie sans bannière (debug)
+### Mode 3. Cookie sans bannière (pour les développeurs)
 
 Cookie visitorId posé immédiatement, durée 395 jours. Tracking complet dès le premier chargement. Identité persistante garantie. À utiliser en environnement de développement uniquement.
 

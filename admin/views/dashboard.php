@@ -162,42 +162,34 @@ if ( ! defined( 'ABSPATH' ) ) {
 
     <!-- Grid: Referrers + Devices -->
     <div class="aa-grid">
-        <div class="aa-card">
-            <div class="aa-card-header">
+        <div class="aa-card aa-referrers-card">
+            <div class="aa-card-header aa-ref-header">
                 <h2><?php esc_html_e( 'Référents', 'always-analytics' ); ?></h2>
+                <div class="aa-ref-tabs" role="tablist">
+                    <span class="aa-ref-tab aa-ref-tab--active" data-cat="all"    role="tab" tabindex="0"><?php esc_html_e( 'Tous', 'always-analytics' ); ?></span>
+                    <span class="aa-ref-tab" data-cat="search" role="tab" tabindex="0"><?php esc_html_e( 'Moteurs', 'always-analytics' ); ?></span>
+                    <span class="aa-ref-tab" data-cat="social" role="tab" tabindex="0"><?php esc_html_e( 'Réseaux', 'always-analytics' ); ?></span>
+                    <span class="aa-ref-tab" data-cat="ai"     role="tab" tabindex="0"><?php esc_html_e( 'IA', 'always-analytics' ); ?></span>
+                    <span class="aa-ref-tab" data-cat="site"   role="tab" tabindex="0"><?php esc_html_e( 'Sites', 'always-analytics' ); ?></span>
+                </div>
             </div>
-            <div class="aa-card-body">
-                <table class="aa-table" id="aa-referrers">
-                    <thead>
-                        <tr>
-                            <th><?php esc_html_e( 'Source', 'always-analytics' ); ?></th>
-                            <th><?php esc_html_e( 'Visites', 'always-analytics' ); ?></th>
-                            <th><?php esc_html_e( 'Visiteurs', 'always-analytics' ); ?></th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
+            <div class="aa-ref-body">
+                <div id="aa-referrers-list"></div>
             </div>
         </div>
 
-        <div class="aa-card">
-            <div class="aa-card-header">
+        <div class="aa-card aa-devices-card">
+            <div class="aa-card-header aa-dev-header">
                 <h2><?php esc_html_e( 'Appareils & Navigateurs', 'always-analytics' ); ?></h2>
+                <div class="aa-dev-tabs" role="tablist">
+                    <span class="aa-dev-tab aa-dev-tab--active" data-device="all"     role="tab" tabindex="0"><?php esc_html_e( 'Tous', 'always-analytics' ); ?></span>
+                    <span class="aa-dev-tab" data-device="desktop" role="tab" tabindex="0">🖥 <?php esc_html_e( 'Desktop', 'always-analytics' ); ?></span>
+                    <span class="aa-dev-tab" data-device="mobile"  role="tab" tabindex="0">📱 <?php esc_html_e( 'Mobile', 'always-analytics' ); ?></span>
+                    <span class="aa-dev-tab" data-device="tablet"  role="tab" tabindex="0">⬜ <?php esc_html_e( 'Tablette', 'always-analytics' ); ?></span>
+                </div>
             </div>
-            <div class="aa-card-body aa-devices-body">
-                <div class="aa-chart-small">
-                    <canvas id="aa-devices-chart"></canvas>
-                </div>
-                <div class="aa-devices-lists">
-                    <div>
-                        <h4><?php esc_html_e( 'Navigateurs', 'always-analytics' ); ?></h4>
-                        <ul id="aa-browsers-list"></ul>
-                    </div>
-                    <div>
-                        <h4><?php esc_html_e( 'Systèmes', 'always-analytics' ); ?></h4>
-                        <ul id="aa-os-list"></ul>
-                    </div>
-                </div>
+            <div class="aa-dev-body">
+                <div id="aa-devices-list"></div>
             </div>
         </div>
     </div>

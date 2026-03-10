@@ -541,8 +541,14 @@ class Always_Analytics_Rest {
         $table  = $wpdb->prefix . 'aa_hits';
         $limit  = absint( $request->get_param( 'limit' ) ?: 20 );
 
-        $sql    = "SELECT referrer_domain, COUNT(*) as hits, COUNT(DISTINCT visitor_hash) as unique_visitors
-                   FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND referrer_domain != ''";
+        // Sessions (pas pages vues) : un visiteur qui charge 10 pages depuis Google
+        // ne compte qu'une fois. On prend le premier hit de chaque session (MIN hit_at)
+        // pour rattacher la session à son référent d'entrée.
+        $sql    = "SELECT referrer_domain,
+                          COUNT(DISTINCT session_id)   as hits,
+                          COUNT(DISTINCT visitor_hash) as unique_visitors
+                   FROM {$table}
+                   WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND referrer_domain != ''";
         $args   = array( $params['from_utc'], $params['to_utc'] );
         if ( ! empty( $params['device'] ) ) { $sql .= ' AND device_type = %s'; $args[] = $params['device']; }
         $sql   .= ' GROUP BY referrer_domain ORDER BY hits DESC LIMIT %d';
@@ -593,17 +599,59 @@ class Always_Analytics_Rest {
         $table     = $wpdb->prefix . 'aa_hits';
         $base_args = array( $params['from_utc'], $params['to_utc'] );
 
+        // Toutes les métriques sont en sessions (COUNT DISTINCT session_id),
+        // pas en pages vues — un visiteur qui charge 10 pages ne compte qu'une fois.
+
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $devices  = $wpdb->get_results( $wpdb->prepare( "SELECT device_type, COUNT(*) as count FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 GROUP BY device_type ORDER BY count DESC", $base_args ) );
+        $devices = $wpdb->get_results( $wpdb->prepare(
+            "SELECT device_type, COUNT(DISTINCT session_id) as count
+             FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+             GROUP BY device_type ORDER BY count DESC",
+            $base_args
+        ) );
+
+        // Navigateurs et OS globaux (onglet "Tous")
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $browsers = $wpdb->get_results( $wpdb->prepare( "SELECT browser, COUNT(*) as count FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND browser != '' GROUP BY browser ORDER BY count DESC LIMIT 10", $base_args ) );
+        $browsers = $wpdb->get_results( $wpdb->prepare(
+            "SELECT browser, COUNT(DISTINCT session_id) as count
+             FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND browser != ''
+             GROUP BY browser ORDER BY count DESC LIMIT 10",
+            $base_args
+        ) );
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery
-        $os_list  = $wpdb->get_results( $wpdb->prepare( "SELECT os, COUNT(*) as count FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND os != '' GROUP BY os ORDER BY count DESC LIMIT 10", $base_args ) );
+        $os_list = $wpdb->get_results( $wpdb->prepare(
+            "SELECT os, COUNT(DISTINCT session_id) as count
+             FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND os != ''
+             GROUP BY os ORDER BY count DESC LIMIT 10",
+            $base_args
+        ) );
+
+        // Navigateurs et OS par device_type (pour les onglets filtrés)
+        $by_device = array();
+        foreach ( array( 'desktop', 'mobile', 'tablet' ) as $dtype ) {
+            $args_dt = array( $params['from_utc'], $params['to_utc'], $dtype );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $b = $wpdb->get_results( $wpdb->prepare(
+                "SELECT browser, COUNT(DISTINCT session_id) as count
+                 FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND device_type = %s AND browser != ''
+                 GROUP BY browser ORDER BY count DESC LIMIT 10",
+                $args_dt
+            ) );
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $o = $wpdb->get_results( $wpdb->prepare(
+                "SELECT os, COUNT(DISTINCT session_id) as count
+                 FROM {$table} WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND device_type = %s AND os != ''
+                 GROUP BY os ORDER BY count DESC LIMIT 10",
+                $args_dt
+            ) );
+            $by_device[ $dtype ] = array( 'browsers' => $b, 'os' => $o );
+        }
 
         return rest_ensure_response( array(
-            'devices'  => $devices,
-            'browsers' => $browsers,
-            'os'       => $os_list,
+            'devices'   => $devices,
+            'browsers'  => $browsers,
+            'os'        => $os_list,
+            'by_device' => $by_device,
         ) );
     }
 
@@ -1122,14 +1170,21 @@ class Always_Analytics_Rest {
 
         // ── Calcul du score composite en PHP ────────────────────────────────────
         //
-        // 6 signaux indépendants, normalisés 0→1, combinés avec des poids calibrés :
+        // 5 signaux indépendants, normalisés 0→1, combinés avec des poids calibrés :
         //
-        //  1. Durée relative    22% — durée de la page VS médiane du site
-        //  2. Scroll depth      20% — profondeur de lecture effective
-        //  3. Taux engagement   20% — sessions non-bounce (Wilson lower bound)
-        //  4. Taux de retour    18% — visiteurs revenant sur la même page
-        //  5. Depth/session     12% — pages vues dans la session (entry point)
-        //  6. Confiance          8% — fiabilité selon le volume de sessions
+        //  1. Durée relative    ~23.9% — durée de la page VS médiane du site
+        //  2. Scroll depth      ~21.7% — profondeur de lecture effective
+        //  3. Taux engagement   ~21.7% — sessions non-bounce
+        //  4. Taux de retour    ~19.6% — visiteurs revenant sur la même page
+        //  5. Depth/session     ~13.0% — pages vues dans la session (entry point)
+        //
+        // La correction d'incertitude (Wilson lower bound, z=1.96) s'applique sur
+        // P_brut (synthèse pondérée des 5 signaux) avec n = sessions totales de la page.
+        // Une page avec peu de données est pénalisée globalement sur l'ensemble du score.
+        //
+        // Poids renormalisés sur les 5 signaux (anciens 22+20+20+18+12 = 92%) :
+        // w1 = 22/92 ≈ 0.2391, w2 = 20/92 ≈ 0.2174, w3 = 20/92 ≈ 0.2174
+        // w4 = 18/92 ≈ 0.1957, w5 = 12/92 ≈ 0.1304
 
         $durations = array_filter( array_map( function( $r ) { return (float) $r->avg_duration; }, $rows ), function( $d ) { return $d > 0; } );
         sort( $durations );
@@ -1144,6 +1199,13 @@ class Always_Analytics_Rest {
         $z  = 1.96;
         $z2 = $z * $z;
 
+        // Poids renormalisés (5 signaux, somme = 1.0)
+        $w_duration   = 22 / 92;
+        $w_scroll     = 20 / 92;
+        $w_engagement = 20 / 92;
+        $w_return     = 18 / 92;
+        $w_depth      = 12 / 92;
+
         $scored = array();
         foreach ( $rows as $row ) {
             $n_total      = max( 1, (int) $row->total_sessions );
@@ -1156,22 +1218,14 @@ class Always_Analytics_Rest {
             $avg_scroll   = max( 0, min( 100, (float) $row->avg_scroll ) );
             $avg_depth    = max( 0, (float) $row->avg_depth_as_entry );
 
-            // Signal 1 : Durée relative
+            // Signal 1 : Durée relative (plafonnée à 2× la médiane)
             $s_duration = $avg_dur > 0 ? min( 1.0, $avg_dur / ( 2.0 * $median_dur ) ) : 0.0;
 
             // Signal 2 : Scroll depth
             $s_scroll = $avg_scroll / 100.0;
 
-            // Signal 3 : Taux d'engagement (Wilson lower bound)
-            $p_eng = $n_measurable > 0 ? $n_engaged / $n_measurable : 0;
-            if ( $n_measurable > 0 ) {
-                $wilson_eng   = ( $p_eng + $z2 / ( 2 * $n_measurable )
-                    - $z * sqrt( $p_eng * ( 1 - $p_eng ) / $n_measurable + $z2 / ( 4 * $n_measurable * $n_measurable ) ) )
-                    / ( 1 + $z2 / $n_measurable );
-                $s_engagement = max( 0, $wilson_eng );
-            } else {
-                $s_engagement = 0.0;
-            }
+            // Signal 3 : Taux d'engagement brut (Wilson s'applique sur P global, pas ici)
+            $s_engagement = $n_measurable > 0 ? min( 1.0, $n_engaged / $n_measurable ) : 0.0;
 
             // Signal 4 : Taux de retour
             $s_return = min( 1.0, ( $n_returning / $n_unique ) / 0.5 );
@@ -1181,17 +1235,27 @@ class Always_Analytics_Rest {
                 ? min( 1.0, max( 0.0, ( $avg_depth - 1.0 ) / 4.0 ) )
                 : 0.0;
 
-            // Signal 6 : Confiance (volume)
-            if ( $n_total >= 200 )    { $s_confidence = 1.0; }
-            elseif ( $n_total >= 50 ) { $s_confidence = 0.85; }
-            elseif ( $n_total >= 20 ) { $s_confidence = 0.65; }
-            elseif ( $n_total >= 5 )  { $s_confidence = 0.40; }
-            else                      { $s_confidence = 0.15; }
+            // Performance brute : moyenne pondérée des 5 signaux ∈ [0, 1]
+            $p_brut = $s_duration   * $w_duration
+                    + $s_scroll     * $w_scroll
+                    + $s_engagement * $w_engagement
+                    + $s_return     * $w_return
+                    + $s_depth      * $w_depth;
 
-            $score = round( min( 100,
-                ( $s_duration * 0.22 + $s_scroll * 0.20 + $s_engagement * 0.20
-                + $s_return * 0.18 + $s_depth * 0.12 + $s_confidence * 0.08 ) * 100
-            ), 1 );
+            // Wilson lower bound sur P_brut avec n = sessions totales.
+            // Pour n → ∞, S_final → P_brut.
+            // Pour n petit, S_final << P_brut : la page est pénalisée globalement.
+            // La formule est valide pour P ∈ [0,1] et n ≥ 1.
+            $n = $n_total;
+            $wilson_final = ( $p_brut + $z2 / ( 2 * $n )
+                - $z * sqrt( $p_brut * ( 1 - $p_brut ) / $n + $z2 / ( 4 * $n * $n ) ) )
+                / ( 1 + $z2 / $n );
+
+            $score = round( min( 100, max( 0, $wilson_final * 100 ) ), 1 );
+
+            // Facteur de confiance : ratio S_final / P_brut, exprimé en %
+            // 100% = aucune pénalité (n élevé), <100% = pénalisé par manque de données
+            $confidence_factor = $p_brut > 0 ? round( $wilson_final / $p_brut * 100, 1 ) : 0;
 
             $eng_rate_pct = $n_measurable > 0 ? round( $n_engaged / $n_measurable * 100 ) : null;
 
@@ -1209,14 +1273,15 @@ class Always_Analytics_Rest {
                 'avg_depth_as_entry' => round( $avg_depth, 1 ),
                 'entry_sessions'     => $n_entry,
                 'engagement_score'   => $score,
-                // Valeurs brutes affichées dans chaque cellule de signal
                 'score_signals'      => array(
                     'duration'   => array( 'score' => round( $s_duration   * 100, 1 ), 'raw' => round( $avg_dur ) ),
                     'scroll'     => array( 'score' => round( $s_scroll     * 100, 1 ), 'raw' => round( $avg_scroll ) ),
                     'engagement' => array( 'score' => round( $s_engagement * 100, 1 ), 'raw' => $eng_rate_pct ),
                     'return'     => array( 'score' => round( $s_return     * 100, 1 ), 'raw' => round( $n_returning / $n_unique * 100 ) ),
                     'depth'      => array( 'score' => round( $s_depth      * 100, 1 ), 'raw' => round( $avg_depth, 1 ) ),
-                    'confidence' => array( 'score' => round( $s_confidence * 100, 1 ), 'raw' => $n_total ),
+                    // Confiance = facteur Wilson : jusqu'à quel point P_brut est retenu.
+                    // Exemple : 73% signifie que Wilson a réduit le score de 27% par manque de données.
+                    'confidence' => array( 'score' => $confidence_factor, 'raw' => $n_total ),
                 ),
             );
         }

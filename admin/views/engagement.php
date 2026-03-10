@@ -117,12 +117,12 @@ $back_url = admin_url( 'admin.php?page=always-analytics' );
                         <th style="width:100px;text-align:center">Score</th>
                         <th>
                             <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:4px;font-size:10px;font-weight:600;color:#94a3b8;text-transform:uppercase;letter-spacing:0.4px;padding:0 4px;">
-                                <span title="Durée moyenne sur cette page (signal 22%)">🕒 Durée moy.</span>
-                                <span title="Scroll depth moyen (signal 20%)">⬇ Scroll moy.</span>
-                                <span title="% sessions engagées (signal 20%)">✅ Engagement</span>
-                                <span title="% visiteurs revenus (signal 18%)">🔁 Retour</span>
-                                <span title="Pages/session depuis cette page (signal 12%)">📄 Profondeur</span>
-                                <span title="Nombre de sessions · fiabilité statistique (signal 8%)">📊 Sessions</span>
+                                <span title="Durée moyenne sur cette page (poids ~24%)">🕒 Durée moy.</span>
+                                <span title="Scroll depth moyen (poids ~22%)">⬇ Scroll moy.</span>
+                                <span title="% sessions engagées (poids ~22%)">✅ Engagement</span>
+                                <span title="% visiteurs revenus (poids ~20%)">🔁 Retour</span>
+                                <span title="Pages/session depuis cette page (poids ~13%)">📄 Profondeur</span>
+                                <span title="Facteur Wilson : correction d'incertitude appliquée sur le score global (100% = aucune pénalité)">📊 Confiance</span>
                             </div>
                         </th>
                     </tr>
@@ -429,37 +429,37 @@ $back_url = admin_url( 'admin.php?page=always-analytics' );
             var title      = p.page_title || p.page_url || '—';
             var medal      = idx === 0 ? '🥇 ' : idx === 1 ? '🥈 ' : idx === 2 ? '🥉 ' : '';
 
-            // Définition des 6 signaux avec leur valeur brute formatée
+            // Définition des 5 signaux + facteur Wilson
             var signals = [
                 {
                     score: parseFloat((sig.duration  || {}).score || 0),
                     label: fmtDur(p.avg_duration || 0),
-                    title: 'Durée moyenne · signal ' + parseFloat((sig.duration  || {}).score || 0).toFixed(0) + '/100 (poids 22%)'
+                    title: 'Durée moyenne · signal ' + parseFloat((sig.duration  || {}).score || 0).toFixed(0) + '/100 (poids ~24%)'
                 },
                 {
                     score: parseFloat((sig.scroll    || {}).score || 0),
                     label: (sig.scroll && (sig.scroll.raw || sig.scroll.raw === 0)) ? sig.scroll.raw + '%' : '—',
-                    title: 'Scroll moyen · signal ' + parseFloat((sig.scroll    || {}).score || 0).toFixed(0) + '/100 (poids 20%)'
+                    title: 'Scroll moyen · signal ' + parseFloat((sig.scroll    || {}).score || 0).toFixed(0) + '/100 (poids ~22%)'
                 },
                 {
                     score: parseFloat((sig.engagement|| {}).score || 0),
                     label: (sig.engagement && sig.engagement.raw !== null && sig.engagement.raw !== undefined) ? sig.engagement.raw + '%' : '—',
-                    title: 'Sessions engagées · signal ' + parseFloat((sig.engagement|| {}).score || 0).toFixed(0) + '/100 (poids 20%)'
+                    title: 'Sessions engagées · signal ' + parseFloat((sig.engagement|| {}).score || 0).toFixed(0) + '/100 (poids ~22%)'
                 },
                 {
                     score: parseFloat((sig['return'] || {}).score || 0),
                     label: (sig['return'] && (sig['return'].raw || sig['return'].raw === 0)) ? sig['return'].raw + '%' : '—',
-                    title: 'Visiteurs de retour · signal ' + parseFloat((sig['return'] || {}).score || 0).toFixed(0) + '/100 (poids 18%)'
+                    title: 'Visiteurs de retour · signal ' + parseFloat((sig['return'] || {}).score || 0).toFixed(0) + '/100 (poids ~20%)'
                 },
                 {
                     score: parseFloat((sig.depth     || {}).score || 0),
                     label: (sig.depth && sig.depth.raw > 0) ? sig.depth.raw + ' p.' : '—',
-                    title: 'Pages par session (depuis cette page) · signal ' + parseFloat((sig.depth     || {}).score || 0).toFixed(0) + '/100 (poids 12%)'
+                    title: 'Pages par session (depuis cette page) · signal ' + parseFloat((sig.depth     || {}).score || 0).toFixed(0) + '/100 (poids ~13%)'
                 },
                 {
                     score: parseFloat((sig.confidence|| {}).score || 0),
                     label: fmt(p.total_sessions) + ' sess.',
-                    title: 'Fiabilité statistique · ' + fmt(p.total_sessions) + ' sessions · signal ' + parseFloat((sig.confidence|| {}).score || 0).toFixed(0) + '/100 (poids 8%)'
+                    title: 'Fiabilité statistique (Wilson) · ' + fmt(p.total_sessions) + ' sessions · facteur de rétention ' + parseFloat((sig.confidence|| {}).score || 0).toFixed(0) + '% (100% = aucune pénalité)'
                 },
             ];
 

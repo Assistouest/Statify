@@ -3,7 +3,7 @@
  * Plugin Name:       Always Analytics
  * Plugin URI:        https://example.com/always-analytics
  * Description:       Statistiques avancées auto-hébergées, légères et respectueuses de la vie privée pour WordPress.
- * Version:           2.1.0
+ * Version:           2.3.0
  * Author:            Adrien
  * Author URI:        https://assistouest.fr
  * License:           GPL-2.0+
@@ -19,7 +19,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AA_VERSION', '2.1.0');
+define('AA_VERSION', '2.3.0');
 define('AA_PLUGIN_FILE', __FILE__);
 define('AA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AA_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -194,12 +194,14 @@ final class Always_Analytics
 
         $tracking_mode = isset($options['tracking_mode']) ? $options['tracking_mode'] : 'cookieless';
         $consent_enabled = !empty($options['consent_enabled']);
+        $cookieless_window = isset($options['cookieless_window']) ? $options['cookieless_window'] : 'daily';
 
         $config = array(
-            'endpoint' => esc_url_raw(rest_url('always-analytics/v1/hit')),
-            'trackingMode' => $tracking_mode,
-            'consentGiven' => ('cookie' === $tracking_mode && $consent_enabled) ? 'pending' : 'not_required',
-            'postId' => get_queried_object_id() ?: 0,
+            'endpoint'         => esc_url_raw(rest_url('always-analytics/v1/hit')),
+            'trackingMode'     => $tracking_mode,
+            'cookielessWindow' => $cookieless_window,
+            'consentGiven'     => ('cookie' === $tracking_mode && $consent_enabled) ? 'pending' : 'not_required',
+            'postId'           => get_queried_object_id() ?: 0,
         );
 
         // En mode cookie + bannière, injecter l'endpoint pour le hit pre_consent

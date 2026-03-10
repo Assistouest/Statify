@@ -15,6 +15,7 @@ $retention = isset($o['retention_days']) ? absint($o['retention_days']) : 90;
 $consent_on = !empty($o['consent_enabled']);
 $anon_ip = !empty($o['anonymize_ip']);
 $geo_on = !empty($o['geo_enabled']);
+$cookieless_window = isset($o['cookieless_window']) ? $o['cookieless_window'] : 'daily';
 
 $need_consent = ('cookie' === $mode && !$consent_on);
 $ret_limit = 390; // 13 months — CNIL threshold
@@ -255,6 +256,36 @@ endforeach; ?>
                             <span class="as-toggle__track"></span>
                             <span class="as-toggle__label"><?php esc_html_e('Activer', 'always-analytics'); ?></span>
                         </label>
+                    </div>
+                </div>
+
+                <div class="as-row">
+                    <div class="as-row__label">
+                        <span class="as-row__title"><?php esc_html_e('Fenêtre d\'unicité (sans cookie)', 'always-analytics'); ?></span>
+                        <span class="as-row__desc"><?php esc_html_e('Définit la durée pendant laquelle un visiteur est considéré unique en mode sans cookie et en pré-consentement RGPD.', 'always-analytics'); ?></span>
+                    </div>
+                    <div class="as-row__control">
+                        <div style="display:flex;flex-direction:column;gap:10px;">
+                            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                                <input type="radio" name="always_analytics_options[cookieless_window]" value="daily"
+                                       <?php checked($cookieless_window, 'daily'); ?>
+                                       style="margin-top:3px;flex-shrink:0;">
+                                <span>
+                                    <strong><?php esc_html_e('Journalière', 'always-analytics'); ?></strong><br>
+                                    <span class="as-row__desc"><?php esc_html_e('SHA256(IP + UA + Langue + date du jour). Un visiteur unique par jour, remis à zéro à minuit UTC.', 'always-analytics'); ?></span>
+                                </span>
+                            </label>
+                            <label style="display:flex;align-items:flex-start;gap:8px;cursor:pointer;">
+                                <input type="radio" name="always_analytics_options[cookieless_window]" value="session"
+                                       <?php checked($cookieless_window, 'session'); ?>
+                                       style="margin-top:3px;flex-shrink:0;">
+                                <span>
+                                    <strong><?php esc_html_e('Session uniquement', 'always-analytics'); ?></strong>
+                                    &nbsp;<span class="as-inline-badge" style="background:#e8f5e9;color:#2e7d32;font-size:10px;padding:1px 6px;border-radius:4px;">CNIL</span><br>
+                                    <span class="as-row__desc"><?php esc_html_e('SHA256(IP + UA + Langue + sessionId). Hash lié à l\'onglet navigateur, disparu à sa fermeture. Aucune persistance cross-session. Recommandé par la CNIL pour l\'exemption de consentement.', 'always-analytics'); ?></span>
+                                </span>
+                            </label>
+                        </div>
                     </div>
                 </div>
 
