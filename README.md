@@ -60,16 +60,19 @@ Peu importe ce que fait le visiteur (accepter, refuser, fermer la bannière, blo
 ## Les trois modes
 
 ### Mode 1. Cookieless
-
 Aucun cookie. Aucune bannière. Démarre immédiatement.
 
-Chaque visiteur est identifié par un hash journalier calculé côté serveur :
-
+Chaque visiteur est identifié par un hash calculé côté serveur :
 ```
-SHA256(IP_anon + UA + Accept-Language + Y-m-d)
+SHA256(IP_anon + UA + Accept-Language + fenêtre_temporelle)
 ```
 
-Le hash change chaque jour. Le même visiteur produit un hash identique toute ta journée et un hash différent le jour suivant.
+La **fenêtre d'unicité** est configurable dans Réglages → Confidentialité & RGPD :
+
+- **Journalière** (défaut) — le hash change chaque jour. Le même visiteur produit un hash identique toute la journée et un hash différent le jour suivant.
+- **Par session** — le hash est lié à l'identifiant de session du navigateur. Chaque nouvel onglet ou nouvelle session produit un hash distinct, sans aucune persistance entre les visites.
+
+Les deux modes sont conformes aux recommandations CNIL pour l'analytics cookieless.
 
 ## Données collectées
 
