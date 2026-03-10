@@ -69,8 +69,8 @@ SHA256(IP_anon + UA + Accept-Language + fenêtre_temporelle)
 
 La **fenêtre d'unicité** est configurable dans Réglages → Confidentialité & RGPD :
 
-- **Journalière** (défaut) — le hash change chaque jour. Le même visiteur produit un hash identique toute la journée et un hash différent le jour suivant.
-- **Par session** — le hash est lié à l'identifiant de session du navigateur. Chaque nouvel onglet ou nouvelle session produit un hash distinct, sans aucune persistance entre les visites.
+- **Journalière** (défaut) : le hash change chaque jour. Le même visiteur produit un hash identique toute la journée et un hash différent le jour suivant, ce qui permet de détecter les retours dans une fenêtre raisonnable sans aucune persistance à long terme.
+- - **Par session** : le hash est lié à l'identifiant de session du navigateur. Chaque nouvel onglet ou nouvelle session produit un hash distinct, sans aucune persistance entre les visites.
 
 Les deux modes sont conformes aux recommandations CNIL pour l'analytics cookieless.
 
@@ -157,7 +157,7 @@ if (persisted) {
 return null;                // Cookie bloqué → fallback cookieless
 ```
 
-Si `null` est retourné, le hit est envoyé sans `visitorId`. Le serveur détecte l'absence et bascule automatiquement sur le hash journalier — exactement comme le Mode 1.
+Si `null` est retourné, le hit est envoyé sans `visitorId`. Le serveur détecte l'absence et bascule automatiquement sur le hash cookieless, exactement comme le Mode 1.
 
 ---
 
