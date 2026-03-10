@@ -34,9 +34,14 @@ Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieur
 > [!TIP]
 > Avec cet algorithme, une page avec peu de données est punie par l'incertitude. Elle ne montera dans vos tops que lorsqu'elle aura prouvé sa performance sur un volume de trafic significatif.
 
-Le score est calculé selon la formule de Wilson pour un niveau de confiance de 95% :
+Pour obtenir le **Score Final ($S_{final}$)**, nous appliquons la correction de Wilson sur la performance brute ($P$) afin de punir l'incertitude des petits échantillons :
 
-$$Score = \frac{\hat{p} + \frac{z^2}{2n} - z \sqrt{\frac{\hat{p}(1-\hat{p})}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
+$$S_{final} = \frac{P + \frac{z^2}{2n} - z \sqrt{\frac{P(1-P)}{n} + \frac{z^2}{4n^2}}}{1 + \frac{z^2}{n}}$$
+
+*Où :*
+* **$P$** est la performance brute (synthèse des 6 indicateurs ci dessous).
+* **$n$** est le nombre de sessions (taille de l'échantillon).
+* **$z$** est le niveau de confiance (1.96 pour 95%).
 
 Le score est calculé relativement à votre site. Always Analytics détermine la médiane  de vos contenus pour définir ce qu’est une lecture longue. Le score final est une synthèse de Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
 
