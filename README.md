@@ -21,18 +21,17 @@
 - **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
 - **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
 
-Contrairement à Yoast SEO ou Google Analytics, Always Analytics traite chaque vue avec une intelligence contextuelle.
+La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages" statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
 
-Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson :
+Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson dans les statistiques d'engagement.
+
+| Page | Sessions | Engag. Brut | Score Wilson | État |
+| :--- | :---: | :---: | :---: | :--- |
+| 🥇 **Guide Pilier : Sécurité** | 1 000 | 80% | **78.2** | ✅ Fiable |
+| 🥈 **Optimisation PHP** | 500 | 75% | **71.4** | ✅ Solide |
+| 🥉 **Mettre à jour Ubuntu...** | 1 | 100% | **12.5** | ⚠️ Instable |
 
 Une page avec 1 vue et 100% d'engagement ne passera jamais devant un pilier de votre site affichant 1000 vues et 80% d'engagement. La stabilité statistique prime sur le pourcentage.
-
-| Page | Score | 🕒 Durée | ⬇ Scroll | ✅ Engag. | 🔁 Retour | 📄 Profond. | 📊 Sessions |
-| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
-| 🥇 **Mettre à jour Ubuntu...** | **53** | 14m 54s | 100% | 100% | 0% | 3 p. | 1 sess. |
-| 🥈 **Enable automatic updates...** | **47** | 14m 54s | 100% | 100% | 0% | — | 1 sess. |
-| 🥉 **How to fully update...** | **47** | -- | -- | -- | -- | -- | -- |
-
 
 Le score est calculé relativement à votre site. Always Analytics détermine la médiane  de vos contenus pour définir ce qu’est une lecture longue. Le score final est une synthèse de Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
 
