@@ -32,7 +32,7 @@ Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieur
 | 🥉 **Mettre à jour Ubuntu...** | 1 | 100% | **12.5** | ⚠️ Instable |
 
 > [!TIP]
-> Avec cet algorithme, une page avec peu de données est "punie" par l'incertitude. Elle ne montera dans vos tops que lorsqu'elle aura prouvé sa performance sur un volume de trafic significatif.
+> Avec cet algorithme, une page avec peu de données est punie par l'incertitude. Elle ne montera dans vos tops que lorsqu'elle aura prouvé sa performance sur un volume de trafic significatif.
 > 
 Le score est calculé relativement à votre site. Always Analytics détermine la médiane  de vos contenus pour définir ce qu’est une lecture longue. Le score final est une synthèse de Durée (22%) • Scroll (20%) • Engagement (20%) • Fidélité (18%) • Profondeur (12%) • Confiance statistique (8%).
 
