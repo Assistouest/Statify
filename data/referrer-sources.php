@@ -36,12 +36,14 @@ return array(
     array( 'pattern' => '(^|\.)yahoo\.',         'cat' => 'search', 'label' => 'Yahoo',        'color' => '#720E9E' ),
     array( 'pattern' => '(^|\.)duckduckgo\.',    'cat' => 'search', 'label' => 'DuckDuckGo',   'color' => '#DE5833' ),
     array( 'pattern' => '(^|\.)qwant\.',         'cat' => 'search', 'label' => 'Qwant',        'color' => '#9963EA' ),
+    array( 'pattern' => '(^|\.)qwantjunior\.',   'cat' => 'search', 'label' => 'Qwant Junior', 'color' => '#9963EA' ),
     array( 'pattern' => '(^|\.)ecosia\.',        'cat' => 'search', 'label' => 'Ecosia',       'color' => '#2E7D32' ),
     array( 'pattern' => '(^|\.)yandex\.',        'cat' => 'search', 'label' => 'Yandex',       'color' => '#FF0000' ),
     array( 'pattern' => '(^|\.)baidu\.',         'cat' => 'search', 'label' => 'Baidu',        'color' => '#2932E1' ),
     array( 'pattern' => '(^|\.)naver\.',         'cat' => 'search', 'label' => 'Naver',        'color' => '#03C75A' ),
     array( 'pattern' => '(^|\.)brave\.com',      'cat' => 'search', 'label' => 'Brave Search', 'color' => '#FB542B' ),
     array( 'pattern' => '(^|\.)startpage\.',     'cat' => 'search', 'label' => 'Startpage',    'color' => '#5CB85C' ),
+    array( 'pattern' => '(^|\.)kagi\.',          'cat' => 'search', 'label' => 'Kagi',         'color' => '#FF4F64' ),
     array( 'pattern' => '(^|\.)ask\.',           'cat' => 'search', 'label' => 'Ask',          'color' => '#E65100' ),
     array( 'pattern' => '(^|\.)seznam\.',        'cat' => 'search', 'label' => 'Seznam',       'color' => '#CC0000' ),
     array( 'pattern' => '(^|\.)swisscows\.',     'cat' => 'search', 'label' => 'Swisscows',    'color' => '#9C27B0' ),
@@ -81,6 +83,7 @@ return array(
     array( 'pattern' => '(^|\.)medium\.',        'cat' => 'social', 'label' => 'Medium',      'color' => '#000000' ),
     array( 'pattern' => '(^|\.)substack\.',      'cat' => 'social', 'label' => 'Substack',    'color' => '#FF6719' ),
     array( 'pattern' => '(^|\.)producthunt\.',   'cat' => 'social', 'label' => 'Product Hunt','color' => '#DA552F' ),
+    array( 'pattern' => '(^|\.)github\.',         'cat' => 'social', 'label' => 'GitHub',      'color' => '#24292F' ),
     array( 'pattern' => 'news\.ycombinator\.',   'cat' => 'social', 'label' => 'Hacker News', 'color' => '#FF6600' ),
 
     // =========================================================================
@@ -106,7 +109,6 @@ return array(
     array( 'pattern' => '(^|\.)phind\.',               'cat' => 'ai', 'label' => 'Phind',       'color' => '#7C3AED' ),
     array( 'pattern' => '^poe\.com',                   'cat' => 'ai', 'label' => 'Poe',         'color' => '#6366F1' ),
     array( 'pattern' => '(^|\.)deepseek\.',            'cat' => 'ai', 'label' => 'DeepSeek',    'color' => '#1E88E5' ),
-    array( 'pattern' => '(^|\.)kagi\.',                'cat' => 'ai', 'label' => 'Kagi',        'color' => '#FF4F64' ),
 
     // =========================================================================
     // SITES — ajouter ici les domaines spécifiques à reconnaître

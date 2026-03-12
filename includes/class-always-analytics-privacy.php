@@ -47,57 +47,209 @@ class Always_Analytics_Privacy {
     public function register_privacy_hooks() {
         add_filter( 'wp_privacy_personal_data_exporters', array( $this, 'register_exporter' ) );
         add_filter( 'wp_privacy_personal_data_erasers', array( $this, 'register_eraser' ) );
+        // Nettoie l'ancienne entrée enregistrée sous un nom différent
+        add_action( 'admin_init', array( $this, 'cleanup_old_policy_entry' ) );
         $this->add_privacy_policy_content();
+    }
+
+    /**
+     * Supprime l'ancienne entrée "Always Analytics (Advanced Stats)" du guide WordPress.
+     */
+    public function cleanup_old_policy_entry() {
+        $old_key = 'Always Analytics (Advanced Stats)';
+        $policy_content = get_option( 'wp_privacy_policy_content', array() );
+        if ( isset( $policy_content[ $old_key ] ) ) {
+            unset( $policy_content[ $old_key ] );
+            update_option( 'wp_privacy_policy_content', $policy_content );
+        }
     }
 
     // ── Politique de confidentialité suggérée ──────────────────────────────────
 
     /**
      * Ajoute un texte de politique de confidentialité dans l'outil WordPress.
+     * Le contenu est généré dynamiquement en fonction des options enregistrées.
      */
     public function add_privacy_policy_content() {
         if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
             return;
         }
 
-        $content = sprintf(
-            '<h2>%s</h2>' .
-            '<p>%s</p>' .
-            '<h3>%s</h3>' .
-            '<p>%s</p>' .
-            '<ul>' .
-            '<li>%s</li>' .
-            '<li>%s</li>' .
-            '<li>%s</li>' .
-            '<li>%s</li>' .
-            '<li>%s</li>' .
-            '<li>%s</li>' .
-            '</ul>' .
-            '<h3>%s</h3>' .
-            '<p>%s</p>' .
-            '<h3>%s</h3>' .
-            '<p>%s</p>' .
-            '<h3>%s</h3>' .
-            '<p>%s</p>',
-            __( 'Statistiques de visite (Always Analytics)', 'always-analytics' ),
-            __( 'Ce site utilise le plugin Always Analytics pour collecter des statistiques de visite anonymes. Ces données nous aident à comprendre comment le site est utilisé et à améliorer son contenu.', 'always-analytics' ),
-            __( 'Données collectées', 'always-analytics' ),
-            __( 'Lors de votre visite, les informations suivantes peuvent être collectées :', 'always-analytics' ),
-            __( 'Pages visitées et durée de consultation', 'always-analytics' ),
-            __( 'Profondeur de défilement (scroll)', 'always-analytics' ),
-            __( 'Type d\'appareil, navigateur et système d\'exploitation', 'always-analytics' ),
-            __( 'Pays d\'origine (via géolocalisation IP anonymisée)', 'always-analytics' ),
-            __( 'Source de trafic (référent, paramètres UTM)', 'always-analytics' ),
-            __( 'Résolution d\'écran', 'always-analytics' ),
-            __( 'Traitement des données', 'always-analytics' ),
-            __( 'Aucune adresse IP complète n\'est stockée. Les adresses IP sont anonymisées (dernier octet supprimé) avant tout traitement. Un identifiant visiteur non réversible (hash cryptographique) est généré pour compter les visiteurs uniques sans permettre de vous identifier. Les données brutes sont automatiquement anonymisées après la période de rétention configurée, et les statistiques agrégées sont conservées.', 'always-analytics' ),
-            __( 'Cookies', 'always-analytics' ),
-            __( 'En mode « sans cookie », aucun cookie n\'est déposé. En mode « cookie », un cookie d\'identification visiteur peut être déposé avec votre consentement préalable (durée : 13 mois maximum). Un cookie de session temporaire (sessionStorage) est utilisé pour regrouper vos pages vues en une seule visite.', 'always-analytics' ),
-            __( 'Vos droits', 'always-analytics' ),
-            __( 'Vous pouvez demander l\'exportation ou la suppression de vos données de visite via la page « Politique de confidentialité » ou en contactant l\'administrateur du site. Les données seront anonymisées (rendues non identifiables) plutôt que supprimées, afin de préserver les statistiques globales.', 'always-analytics' )
-        );
+        $options          = get_option( 'always_analytics_options', array() );
+        $mode             = isset( $options['tracking_mode'] ) ? $options['tracking_mode'] : 'cookieless';
+        $anon_ip          = ! empty( $options['anonymize_ip'] );
+        $geo_on           = ! empty( $options['geo_enabled'] );
+        $consent_on       = ! empty( $options['consent_enabled'] );
+        $retention        = isset( $options['retention_days'] ) ? absint( $options['retention_days'] ) : 90;
+        $window           = isset( $options['cookieless_window'] ) ? $options['cookieless_window'] : 'daily';
+        $disable_tracking = ! empty( $options['disable_tracking'] );
+        $is_cookieless    = ( 'cookieless' === $mode );
 
-        wp_add_privacy_policy_content( 'Always Analytics (Advanced Stats)', $content );
+        // ── Durée de rétention lisible ─────────────────────────────────────────
+        if ( 0 === $retention ) {
+            $retention_label = __( 'indéfiniment (aucune limite configurée)', 'always-analytics' );
+        } elseif ( $retention < 365 ) {
+            $retention_label = sprintf( __( '%d jours', 'always-analytics' ), $retention );
+        } elseif ( 365 === $retention ) {
+            $retention_label = __( '1 an (365 jours)', 'always-analytics' );
+        } else {
+            $retention_label = sprintf( __( '%d jours', 'always-analytics' ), $retention );
+        }
+
+        // ── Fenêtre d'unicité lisible ──────────────────────────────────────────
+        $window_label = ( 'session' === $window )
+            ? __( 'durée de la session de navigation (onglet navigateur)', 'always-analytics' )
+            : __( '24 heures (remis à zéro chaque jour à minuit UTC)', 'always-analytics' );
+
+        // ══════════════════════════════════════════════════════════════════════
+        // CONSTRUCTION DU CONTENU
+        // ══════════════════════════════════════════════════════════════════════
+        $c = '';
+
+        // ── 1. Introduction ────────────────────────────────────────────────────
+        $c .= '<h2>' . esc_html__( 'Mesure d\'audience (Always Analytics)', 'always-analytics' ) . '</h2>';
+
+        if ( $disable_tracking ) {
+            $c .= '<p>' . esc_html__( 'La collecte de statistiques est actuellement désactivée sur ce site. Aucune donnée de navigation n\'est collectée ni traitée par Always Analytics.', 'always-analytics' ) . '</p>';
+            wp_add_privacy_policy_content( 'Always Analytics', $c );
+            return;
+        }
+
+        $c .= '<p>' . esc_html__( 'Ce site utilise Always Analytics pour mesurer son audience. L\'objectif est de comprendre comment le site est consulté (pages les plus visitées, sources de trafic, comportement de navigation) afin d\'en améliorer le contenu et l\'expérience.', 'always-analytics' ) . '</p>';
+
+        // ── 2. Base légale et consentement ─────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Base légale du traitement', 'always-analytics' ) . '</h3>';
+
+        if ( $is_cookieless ) {
+            $c .= '<p>' . esc_html__( 'Ce site utilise un mode de mesure sans cookie. Aucun fichier n\'est déposé sur votre appareil. L\'identification repose sur une empreinte anonyme et non persistante, calculée à partir de données techniques (adresse IP tronquée, navigateur, langue), valable uniquement pour ', 'always-analytics' )
+                . esc_html( $window_label )
+                . esc_html__( '. Ce type de mesure est exempté de l\'obligation de consentement par la CNIL (délibération n°2020-091) car il ne permet pas de vous suivre dans le temps ni entre différents sites.', 'always-analytics' )
+                . '</p>';
+        } elseif ( $consent_on ) {
+            $c .= '<p>' . esc_html__( 'Ce site utilise des cookies de mesure d\'audience. Conformément au RGPD (article 7) et à la directive ePrivacy, ces cookies ne sont déposés qu\'après avoir recueilli votre consentement explicite via la bannière de cookies. Vous pouvez retirer ce consentement à tout moment en cliquant sur le lien « Gérer mes préférences » présent dans le pied de page du site.', 'always-analytics' ) . '</p>';
+        } else {
+            $c .= '<p>' . esc_html__( 'Ce site utilise des cookies de mesure d\'audience. La base légale de ce traitement est votre consentement (RGPD art. 7).', 'always-analytics' ) . '</p>';
+        }
+
+        // ── 3. Données collectées ──────────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Données collectées', 'always-analytics' ) . '</h3>';
+        $c .= '<p>' . esc_html__( 'À chaque visite, les informations suivantes sont enregistrées :', 'always-analytics' ) . '</p>';
+        $c .= '<ul>';
+        $c .= '<li>' . esc_html__( 'URL de la page consultée et horodatage', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Durée de consultation et profondeur de défilement (scroll)', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Type d\'appareil (ordinateur, tablette, mobile), navigateur et système d\'exploitation', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Source de trafic (page de provenance, paramètres UTM)', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Résolution d\'écran', 'always-analytics' ) . '</li>';
+
+        if ( $geo_on ) {
+            if ( $anon_ip ) {
+                $c .= '<li>' . esc_html__( 'Pays et région d\'origine (déterminés à partir de l\'adresse IP tronquée — la géolocalisation est effectuée sur l\'IP anonymisée, sans possibilité d\'identifier précisément le visiteur)', 'always-analytics' ) . '</li>';
+            } else {
+                $c .= '<li>' . esc_html__( 'Pays et région d\'origine (déterminés à partir de l\'adresse IP complète, utilisée uniquement pour la géolocalisation puis écartée — non stockée en base de données)', 'always-analytics' ) . '</li>';
+            }
+        }
+
+        $c .= '</ul>';
+
+        // ── 4. Ce qui n'est PAS collecté ───────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Ce que nous ne collectons pas', 'always-analytics' ) . '</h3>';
+        $c .= '<ul>';
+        $c .= '<li>' . esc_html__( 'Votre adresse IP complète n\'est jamais enregistrée en base de données.', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Aucune donnée de contact (nom, adresse e-mail, téléphone).', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Aucun contenu saisi dans les formulaires.', 'always-analytics' ) . '</li>';
+        $c .= '<li>' . esc_html__( 'Aucun profil publicitaire ni aucune donnée d\'intérêt ou de comportement hors de ce site n\'est constitué par Always Analytics.', 'always-analytics' ) . '</li>';
+        $c .= '</ul>';
+
+        // ── 5. Identifiant visiteur ────────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Identification des visiteurs uniques', 'always-analytics' ) . '</h3>';
+
+        if ( $is_cookieless ) {
+            if ( 'session' === $window ) {
+                $c .= '<p>' . esc_html__( 'Pour compter les visiteurs uniques sans cookie, le site calcule une empreinte numérique temporaire à partir de données techniques non personnelles (adresse IP tronquée, navigateur, langue de navigation). Cette empreinte est un identifiant cryptographique (hash SHA-256) irréversible : il est mathématiquement impossible de retrouver votre adresse IP ou votre identité à partir de cet identifiant. Il est valable uniquement le temps de votre session de navigation (onglet ouvert) et disparaît dès la fermeture de l\'onglet. Aucune persistance entre les visites.', 'always-analytics' ) . '</p>';
+            } else {
+                $c .= '<p>' . esc_html__( 'Pour compter les visiteurs uniques sans cookie, le site calcule une empreinte numérique à partir de données techniques non personnelles (adresse IP tronquée, navigateur, langue de navigation). Cette empreinte est un identifiant cryptographique (hash SHA-256) irréversible, valable 24 heures maximum et remis à zéro chaque jour à minuit UTC. Il est mathématiquement impossible de retrouver votre adresse IP ou votre identité à partir de cet identifiant.', 'always-analytics' ) . '</p>';
+            }
+        } else {
+            $c .= '<p>' . esc_html__( 'En mode cookie, un identifiant de visite anonyme est stocké dans un cookie sur votre appareil. Cet identifiant est un hash SHA-256 non réversible : il ne contient aucune information personnelle et ne permet pas de vous identifier directement. Il est utilisé uniquement pour distinguer les visiteurs uniques sur ce site et compter les sessions de navigation.', 'always-analytics' ) . '</p>';
+        }
+
+        // ── 6. Adresse IP et anonymisation ─────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Traitement de l\'adresse IP', 'always-analytics' ) . '</h3>';
+
+        if ( $anon_ip ) {
+            $c .= '<p>' . esc_html__( 'Votre adresse IP est automatiquement tronquée dès réception, avant tout traitement : le dernier groupe de chiffres est masqué (ex : 192.168.1.42 devient 192.168.1.0 pour IPv4). Cette adresse tronquée ne permet plus d\'identifier précisément un foyer ou un individu. Elle est ensuite utilisée pour calculer l\'identifiant anonyme décrit ci-dessus, puis écartée. Elle n\'est jamais enregistrée en base de données.', 'always-analytics' ) . '</p>';
+        } else {
+            $c .= '<p>' . esc_html__( 'Votre adresse IP est utilisée en mémoire vive pour calculer l\'identifiant de visite anonyme, puis immédiatement écartée. Elle n\'est jamais enregistrée en base de données. Nous vous recommandons d\'activer l\'anonymisation IP dans les réglages du plugin pour une protection maximale.', 'always-analytics' ) . '</p>';
+        }
+
+        // ── 7. Cookies ─────────────────────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Cookies déposés', 'always-analytics' ) . '</h3>';
+
+        if ( $is_cookieless ) {
+            $c .= '<p>' . esc_html__( 'Aucun cookie de tracking n\'est déposé sur votre appareil. Ce site utilise le mode de mesure d\'audience sans cookie, conforme à l\'exemption de consentement de la CNIL.', 'always-analytics' ) . '</p>';
+            $c .= '<p>' . esc_html__( 'Un stockage de session temporaire (sessionStorage du navigateur) peut être utilisé pour regrouper vos pages vues en une seule visite cohérente. Ce stockage disparaît automatiquement à la fermeture de l\'onglet et n\'est jamais transmis à notre serveur.', 'always-analytics' ) . '</p>';
+        } else {
+            $c .= '<p>' . esc_html__( 'Ce site dépose un cookie de mesure d\'audience sur votre appareil', 'always-analytics' );
+            if ( $consent_on ) {
+                $c .= ' ' . esc_html__( 'après avoir recueilli votre consentement', 'always-analytics' );
+            }
+            $c .= '.</p>';
+            $c .= '<table style="border-collapse:collapse;width:100%;font-size:13px;">';
+            $c .= '<thead><tr style="background:#f5f5f5;">'
+                . '<th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">' . esc_html__( 'Nom', 'always-analytics' ) . '</th>'
+                . '<th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">' . esc_html__( 'Finalité', 'always-analytics' ) . '</th>'
+                . '<th style="padding:6px 10px;border:1px solid #ddd;text-align:left;">' . esc_html__( 'Durée', 'always-analytics' ) . '</th>'
+                . '</tr></thead><tbody>';
+            $c .= '<tr>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;"><code>aa_visitor</code></td>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;">' . esc_html__( 'Identifiant visiteur unique anonyme (hash SHA-256 non réversible) pour compter les visites uniques', 'always-analytics' ) . '</td>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;">' . esc_html__( '13 mois maximum', 'always-analytics' ) . '</td>'
+                . '</tr>';
+            $c .= '<tr>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;"><code>aa_session</code></td>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;">' . esc_html__( 'Identifiant de session pour regrouper les pages vues d\'une même visite', 'always-analytics' ) . '</td>'
+                . '<td style="padding:6px 10px;border:1px solid #ddd;">' . esc_html__( 'Session (disparaît à la fermeture du navigateur)', 'always-analytics' ) . '</td>'
+                . '</tr>';
+            $c .= '</tbody></table>';
+        }
+
+        // ── 8. Durée de conservation ───────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Durée de conservation', 'always-analytics' ) . '</h3>';
+
+        if ( 0 === $retention ) {
+            $c .= '<p>' . esc_html__( 'Les données de visite brutes sont conservées sans limite de durée. Les statistiques agrégées (nombre de visites par page, taux de rebond, etc.) sont conservées indéfiniment sous forme anonymisée.', 'always-analytics' ) . '</p>';
+        } else {
+            $c .= '<p>' . sprintf(
+                /* translators: %s: retention period label */
+                esc_html__( 'Les données de visite brutes sont automatiquement anonymisées après %s. L\'anonymisation consiste à remplacer l\'identifiant du visiteur par une valeur aléatoire irréversible : les statistiques (durée, scroll, type d\'appareil, page visitée) sont conservées, mais il devient impossible de les relier à un individu ou à une session spécifique.', 'always-analytics' ),
+                esc_html( $retention_label )
+            ) . '</p>';
+            $c .= '<p>' . esc_html__( 'Les statistiques agrégées (nombre de visiteurs uniques par jour, taux de rebond, pages les plus vues, etc.) sont conservées indéfiniment sous forme non identifiable.', 'always-analytics' ) . '</p>';
+        }
+
+        // ── 9. Transfert de données ────────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Hébergement et transferts', 'always-analytics' ) . '</h3>';
+        $c .= '<p>' . esc_html__( 'Toutes les données collectées par Always Analytics sont stockées directement sur le serveur hébergeant ce site, dans sa base de données WordPress. Le traitement est entièrement local — aucune donnée de mesure d\'audience n\'est transmise à des serveurs externes par ce plugin.', 'always-analytics' ) . '</p>';
+
+        // ── 10. Droits ─────────────────────────────────────────────────────────
+        $c .= '<h3>' . esc_html__( 'Vos droits', 'always-analytics' ) . '</h3>';
+        $c .= '<p>' . esc_html__( 'Conformément au RGPD (articles 15 à 22), vous disposez des droits suivants concernant vos données :', 'always-analytics' ) . '</p>';
+        $c .= '<ul>';
+        $c .= '<li><strong>' . esc_html__( 'Droit d\'accès', 'always-analytics' ) . '</strong> — '
+            . esc_html__( 'vous pouvez demander quelles données de visite sont associées à votre compte utilisateur (si vous êtes connecté au moment de votre visite).', 'always-analytics' ) . '</li>';
+        $c .= '<li><strong>' . esc_html__( 'Droit à l\'effacement (droit à l\'oubli)', 'always-analytics' ) . '</strong> — '
+            . esc_html__( 'vous pouvez demander l\'anonymisation de vos données de visite. Les données seront rendues non identifiables (visitor_hash remplacé par une valeur aléatoire) plutôt que supprimées, afin de préserver l\'intégrité des statistiques globales du site.', 'always-analytics' ) . '</li>';
+        $c .= '<li><strong>' . esc_html__( 'Droit d\'opposition', 'always-analytics' ) . '</strong> — ';
+        if ( $is_cookieless ) {
+            $c .= esc_html__( 'la mesure d\'audience sans cookie ne nécessitant pas de consentement, le droit d\'opposition ne s\'applique pas au sens strict. Vous pouvez toutefois utiliser un bloqueur de traqueurs ou le mode navigation privée pour ne pas être comptabilisé.', 'always-analytics' );
+        } else {
+            $c .= esc_html__( 'vous pouvez retirer votre consentement à tout moment en cliquant sur le bouton de gestion des cookies présent en pied de page.', 'always-analytics' );
+        }
+        $c .= '</li>';
+        $c .= '</ul>';
+        $c .= '<p>' . esc_html__( 'Pour exercer ces droits, contactez l\'administrateur de ce site via la page de contact ou en utilisant l\'outil de demande de données personnelles disponible dans votre espace utilisateur WordPress.', 'always-analytics' ) . '</p>';
+
+        wp_add_privacy_policy_content( 'Always Analytics', $c );
     }
 
     // ── Purge / Anonymisation automatique ─────────────────────────────────────

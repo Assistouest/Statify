@@ -33,15 +33,6 @@ if ( ! defined( 'ABSPATH' ) ) {
                     <button id="aa-apply-dates" class="button"><?php esc_html_e( 'Appliquer', 'always-analytics' ); ?></button>
                 </div>
             </div>
-            <div class="aa-filters">
-                <select id="aa-device-filter">
-                    <option value=""><?php esc_html_e( 'Tous les appareils', 'always-analytics' ); ?></option>
-                    <option value="desktop"><?php esc_html_e( 'Desktop', 'always-analytics' ); ?></option>
-                    <option value="mobile"><?php esc_html_e( 'Mobile', 'always-analytics' ); ?></option>
-                    <option value="tablet"><?php esc_html_e( 'Tablette', 'always-analytics' ); ?></option>
-                </select>
-            </div>
-
         </div>
     </div>
 
@@ -224,6 +215,46 @@ if ( ! defined( 'ABSPATH' ) ) {
         </div>
     </div>
 
+    <!-- Card Sources de Tracking -->
+    <div class="aa-card aa-sources-card" id="aa-sources-card">
+        <div class="aa-card-header">
+            <h2><?php esc_html_e( 'Sources de tracking', 'always-analytics' ); ?></h2>
+            <span class="aa-sources-badge" id="aa-sources-total-badge"></span>
+        </div>
+        <div class="aa-card-body aa-sources-body">
+
+            <!-- Barre de répartition globale -->
+            <div class="aa-sources-bar-wrap">
+                <div class="aa-sources-bar" id="aa-sources-bar" title="<?php esc_attr_e( 'Répartition des hits par source', 'always-analytics' ); ?>"></div>
+                <div class="aa-sources-bar-legend" id="aa-sources-bar-legend"></div>
+            </div>
+
+            <!-- Tableau détaillé par source -->
+            <table class="aa-table aa-sources-table" id="aa-sources-table">
+                <thead>
+                    <tr>
+                        <th><?php esc_html_e( 'Source', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( 'Hits', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( 'Visiteurs uniques', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( 'Sessions', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( 'Nouveaux visiteurs', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( '% du total', 'always-analytics' ); ?></th>
+                        <th class="aa-num"><?php esc_html_e( 'Fusionnés (pre_consent)', 'always-analytics' ); ?></th>
+                        <th><?php esc_html_e( 'Tendance', 'always-analytics' ); ?></th>
+                    </tr>
+                </thead>
+                <tbody id="aa-sources-tbody"></tbody>
+            </table>
+
+            <!-- Bloc informatif -->
+            <div class="aa-sources-info" id="aa-sources-info">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <span id="aa-sources-info-text"></span>
+            </div>
+
+        </div>
+    </div>
+
     <!-- Grid: Top Pages + Countries -->
     <div class="aa-grid">
         <div class="aa-card">
@@ -273,7 +304,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     <div class="aa-grid">
         <div class="aa-card aa-referrers-card">
             <div class="aa-card-header aa-ref-header">
-                <h2><?php esc_html_e( 'Réfrents', 'always-analytics' ); ?></h2>
+                <h2><?php esc_html_e( 'Référents', 'always-analytics' ); ?></h2>
                 <div class="aa-ref-tabs" role="tablist">
                     <span class="aa-ref-tab aa-ref-tab--active" data-cat="all"    role="tab" tabindex="0"><?php esc_html_e( 'Tous', 'always-analytics' ); ?></span>
                     <span class="aa-ref-tab" data-cat="search" role="tab" tabindex="0"><?php esc_html_e( 'Moteurs', 'always-analytics' ); ?></span>

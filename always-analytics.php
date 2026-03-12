@@ -3,7 +3,7 @@
  * Plugin Name:       Always Analytics
  * Plugin URI:        https://example.com/always-analytics
  * Description:       Statistiques avancées auto-hébergées, légères et respectueuses de la vie privée pour WordPress.
- * Version:           2.4.0
+ * Version:           2.5.0
  * Author:            Adrien
  * Author URI:        https://assistouest.fr
  * License:           GPL-2.0+
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AA_VERSION', '2.4.0');
+define('AA_VERSION', '2.5.0');
 define('AA_PLUGIN_FILE', __FILE__);
 define('AA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AA_PLUGIN_URL', plugin_dir_url(__FILE__));
@@ -207,6 +207,9 @@ final class Always_Analytics
             'cookielessWindow' => $cookieless_window,
             'consentGiven'     => ('cookie' === $tracking_mode && $consent_enabled) ? 'pending' : 'not_required',
             'postId'           => get_queried_object_id() ?: 0,
+            // Utilisé côté JS pour ignorer les référents internes (navigation entre pages du site)
+            // et ne pas les confondre avec une source externe.
+            'siteUrl'          => esc_url_raw(home_url()),
         );
 
         // En mode cookie + bannière, injecter l'endpoint pour le hit pre_consent
@@ -240,13 +243,13 @@ final class Always_Analytics
         }
 
         $post_id = get_queried_object_id() ?: 0;
-        $referrer = '';
-        // On ne peut pas lire document.referrer en PHP, mais le Referer HTTP est disponible
-        $http_ref = isset($_SERVER['HTTP_REFERER']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_REFERER'])) : '';
-
+        // Note : HTTP_REFERER côté PHP contient l'URL de la page WP elle-même
+        // (le navigateur l'envoie quand il charge l'img pixel), pas la source
+        // externe du visiteur. On ne l'inclut donc pas dans le pixel pour éviter
+        // de polluer referrer_domain avec des URLs internes.
+        // Pour les visiteurs sans JS, la source sera comptée dans "direct/inconnu".
         $pixel_url = add_query_arg(array_filter(array(
             'p' => $post_id ?: null,
-            'r' => $http_ref ? rawurlencode($http_ref) : null,
             'u' => rawurlencode(esc_url_raw((is_ssl() ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'])),
         )), esc_url_raw(rest_url('always-analytics/v1/noscript')));
 

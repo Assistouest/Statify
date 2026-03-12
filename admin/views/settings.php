@@ -112,6 +112,7 @@ endif; ?></button>
 
     <form method="post" action="options.php" id="aa-settings-form">
         <?php settings_fields('always_analytics_settings'); ?>
+        <input type="hidden" name="_aa_active_tab" id="aa-active-tab-field" value="tracking">
 
         <!-- ═══════════════════════════════════════════════════════════════════
              TAB — TRACKING
@@ -162,6 +163,24 @@ endif; ?></button>
                             </label>
                         </div>
                     </div>
+                    <?php if ($need_consent): ?>
+                    <div class="as-row__alert">
+                        <div id="aa-alert-cookie-mode" class="as-inline-alert as-inline-alert--danger">
+                            <svg class="as-inline-alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <div>
+                                <strong><?php esc_html_e('Bannière de consentement obligatoire en mode cookie', 'always-analytics'); ?></strong>
+                                <?php esc_html_e('En passant en mode cookie, un fichier est déposé sur l\'appareil du visiteur pour le reconnaître d\'une visite à l\'autre. Or la loi est claire : on ne peut pas déposer un cookie de tracking sans avoir obtenu le consentement préalable et explicite du visiteur.', 'always-analytics'); ?>
+                                <div class="as-inline-alert__laws">
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 7</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Directive ePrivacy 2002/58/CE art. 5.3</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>CNIL délibération n°2020-091</span>
+                                </div>
+                                <?php esc_html_e('Concrètement : sans bannière active, vos visiteurs sont trackés sans le savoir, ce qui constitue une infraction. En cas de contrôle, la CNIL peut prononcer une mise en demeure, voire une sanction financière.', 'always-analytics'); ?>
+                                <a href="#" class="as-inline-alert__link aa-settings-tab-link" data-tab="consent"><?php esc_html_e('→ Activer la bannière dans l\'onglet Consentement', 'always-analytics'); ?></a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="as-row">
@@ -232,7 +251,7 @@ endforeach; ?>
                     </div>
                 </div>
 
-                <div class="as-row as-row--last">
+                <div class="as-row <?php echo ($geo_on && !$anon_ip) ? '' : 'as-row--last'; ?>">
                     <div class="as-row__label">
                         <span class="as-row__title"><?php esc_html_e('Géolocalisation', 'always-analytics'); ?></span>
                         <span class="as-row__desc"><?php esc_html_e('Résout les IPs en pays/ville lors du tracking pour enrichir vos statistiques.', 'always-analytics'); ?></span>
@@ -244,6 +263,23 @@ endforeach; ?>
                             <span class="as-toggle__label"><?php esc_html_e('Activer', 'always-analytics'); ?></span>
                         </label>
                     </div>
+                    <?php if ($geo_on && !$anon_ip): ?>
+                    <div class="as-row__alert">
+                        <div id="aa-alert-geo" class="as-inline-alert as-inline-alert--warn">
+                            <svg class="as-inline-alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <div>
+                                <strong><?php esc_html_e('La géolocalisation traite l\'IP complète de vos visiteurs', 'always-analytics'); ?></strong>
+                                <?php esc_html_e('Pour localiser un visiteur (pays, région, ville), le plugin utilise son adresse IP. Sans anonymisation préalable, cette IP complète est traitée comme donnée personnelle identifiante. Ce n\'est pas interdit, mais cela oblige à une base légale explicite et à en informer les visiteurs.', 'always-analytics'); ?>
+                                <div class="as-inline-alert__laws">
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 4.1 — l'IP est une donnée personnelle</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 25 — privacy by design</span>
+                                </div>
+                                <?php esc_html_e('Solution simple : activez l\'anonymisation IP dans l\'onglet Confidentialité. La géolocalisation continuera de fonctionner à l\'échelle du pays et de la ville, sans traiter d\'IP personnelle.', 'always-analytics'); ?>
+                                <a href="#" class="as-inline-alert__link aa-settings-tab-link" data-tab="privacy"><?php esc_html_e('→ Activer l\'anonymisation IP', 'always-analytics'); ?></a>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -258,7 +294,7 @@ endforeach; ?>
                     <p><?php esc_html_e('Protection des données personnelles et durée de conservation.', 'always-analytics'); ?></p>
                 </div>
 
-                <div class="as-row">
+                <div class="as-row <?php echo !$anon_ip ? '' : 'as-row--last'; ?>">
                     <div class="as-row__label">
                         <span class="as-row__title"><?php esc_html_e('Anonymiser les IPs', 'always-analytics'); ?></span>
                         <span class="as-row__desc"><?php esc_html_e('Masque le dernier octet IPv4 et les 80 derniers bits IPv6 avant le hachage.', 'always-analytics'); ?></span>
@@ -270,6 +306,23 @@ endforeach; ?>
                             <span class="as-toggle__label"><?php esc_html_e('Activer', 'always-analytics'); ?></span>
                         </label>
                     </div>
+                    <?php if (!$anon_ip): ?>
+                    <div class="as-row__alert">
+                        <div id="aa-alert-anon-ip" class="as-inline-alert as-inline-alert--warn">
+                            <svg class="as-inline-alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                            <div>
+                                <strong><?php esc_html_e('L\'adresse IP de vos visiteurs est une donnée personnelle', 'always-analytics'); ?></strong>
+                                <?php esc_html_e('Sans anonymisation, l\'IP complète du visiteur (ex : 192.168.1.42) est utilisée pour calculer son identifiant. Or une IP permet d\'identifier une personne — c\'est donc une donnée personnelle au sens strict du RGPD. La CNIL recommande de tronquer systématiquement le dernier octet (ex : 192.168.1.0) avant tout traitement, rendant l\'identification impossible.', 'always-analytics'); ?>
+                                <div class="as-inline-alert__laws">
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 4.1 — définition donnée personnelle</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 25 — protection des données dès la conception</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>CNIL recommandation anonymisation IP</span>
+                                </div>
+                                <?php esc_html_e('Activer cette option ne change rien à vos statistiques : vous verrez toujours les pays, villes et visites uniques — mais sans risque RGPD.', 'always-analytics'); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="as-row">
@@ -306,7 +359,7 @@ endforeach; ?>
                     <div class="as-row__label">
                         <span class="as-row__title">
                             <?php esc_html_e('Durée de rétention', 'always-analytics'); ?>
-                            <?php if ($ret_warn): ?><span class="as-inline-badge mod-warn">⚠ CNIL</span><?php
+                            <?php if ($ret_warn): ?><span class="as-inline-badge mod-warn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;vertical-align:middle;margin-right:3px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>CNIL</span><?php
 endif; ?>
                         </span>
                         <span class="as-row__desc"><?php esc_html_e('Après cette période, les données brutes sont anonymisées (les agrégats sont conservés indéfiniment). La CNIL recommande 13 mois maximum.', 'always-analytics'); ?></span>
@@ -320,6 +373,32 @@ endif; ?>
                             <option value="0"   <?php selected($retention, 0); ?>><?php esc_html_e('Illimité', 'always-analytics'); ?></option>
                         </select>
                     </div>
+                    <?php if (0 === $retention || $ret_warn): ?>
+                    <div class="as-row__alert">
+                        <div id="aa-alert-retention" class="as-inline-alert as-inline-alert--<?php echo (0 === $retention) ? 'danger' : 'warn'; ?>">
+                            <svg class="as-inline-alert__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                            <div>
+                                <?php if (0 === $retention): ?>
+                                <strong><?php esc_html_e('Rétention illimitée : vos données ne sont jamais effacées', 'always-analytics'); ?></strong>
+                                <?php esc_html_e('Le RGPD pose un principe fondamental : on ne peut pas garder des données personnelles plus longtemps que nécessaire. Avec une rétention illimitée, les visites de vos utilisateurs restent en base indéfiniment — sans aucune base légale. La CNIL fixe un maximum de 13 mois pour les données d\'audience web.', 'always-analytics'); ?>
+                                <div class="as-inline-alert__laws">
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 5.1.e — limitation de la conservation</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>CNIL recommandation — 13 mois max (390 jours)</span>
+                                </div>
+                                <?php esc_html_e('Bonne nouvelle : choisir 365 jours suffit pour avoir un historique annuel complet, tout en étant pleinement conforme.', 'always-analytics'); ?>
+                                <?php else: ?>
+                                <strong><?php printf(esc_html__('Rétention de %d jours : au-delà du seuil CNIL', 'always-analytics'), $retention); ?></strong>
+                                <?php printf(esc_html__('Vous conservez des données de visite pendant %d jours, soit plus de 13 mois. La CNIL recommande de ne pas dépasser 390 jours pour les statistiques d\'audience. Au-delà, vous devrez justifier d\'une nécessité particulière — ce qui est rarement le cas pour de la mesure d\'audience simple.', 'always-analytics'), $retention); ?>
+                                <div class="as-inline-alert__laws">
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>RGPD art. 5.1.e — limitation de la conservation</span>
+                                    <span class="as-law-tag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>CNIL recommandation — 13 mois max (390 jours)</span>
+                                </div>
+                                <?php esc_html_e('→ Passez à 365 jours : vous gardez un an d\'historique complet, en toute conformité.', 'always-analytics'); ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
 
                 <div class="as-row as-row--last">
@@ -356,13 +435,24 @@ endif; ?>
                         <svg class="as-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 11V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v0"/><path d="M14 10V4a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v2"/><path d="M10 10.5V6a2 2 0 0 0-2-2v0a2 2 0 0 0-2 2v8"/><path d="M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.86-5.99-2.34l-3.6-3.6a2 2 0 0 1 2.83-2.82L7 15"/></svg> <?php esc_html_e('Bannière de consentement', 'always-analytics'); ?>
                         <?php if ($need_consent): ?>
                             <span class="as-inline-badge mod-danger"><?php esc_html_e('Action requise', 'always-analytics'); ?></span>
-                        <?php
-elseif ($consent_on): ?>
+                        <?php elseif ('cookieless' === $mode): ?>
+                            <span class="as-inline-badge mod-ok"><?php esc_html_e('Exemption CNIL', 'always-analytics'); ?></span>
+                        <?php elseif ($consent_on): ?>
                             <span class="as-inline-badge mod-ok"><?php esc_html_e('Active', 'always-analytics'); ?></span>
-                        <?php
-endif; ?>
+                        <?php endif; ?>
                     </h2>
+                    <?php if ('cookieless' === $mode): ?>
                     <p><?php esc_html_e('Bandeau affiché aux visiteurs pour recueillir leur consentement au tracking par cookie.', 'always-analytics'); ?></p>
+                    <div class="as-notice as-notice--success">
+                        <svg class="as-notice__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        <div>
+                            <strong><?php esc_html_e('Vous êtes exempté de consentement.', 'always-analytics'); ?></strong><br>
+                            <?php esc_html_e('En mode cookieless, le tracking utilise un hash journalier anonyme sans dépôt de cookie. Conformément aux recommandations de la CNIL (délibération n°2020-091), ce type de mesure d\'audience est exempté de l\'obligation de recueil du consentement. Aucune bannière n\'est requise.', 'always-analytics'); ?>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <p><?php esc_html_e('Bandeau affiché aux visiteurs pour recueillir leur consentement au tracking par cookie.', 'always-analytics'); ?></p>
+                    <?php endif; ?>
                 </div>
 
                 <div class="as-row">
@@ -526,103 +616,378 @@ endif; ?>
          TAB — CONFORMITÉ RGPD
     ═══════════════════════════════════════════════════════════════════════ -->
     <div class="as-panel" data-panel="rgpd">
-        <div class="as-card">
-            <div class="as-card__head">
-                <h2><svg class="as-tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg> <?php esc_html_e('Conformité RGPD', 'always-analytics'); ?></h2>
-                <p><?php esc_html_e('Vérification automatique des points de conformité selon les recommandations CNIL.', 'always-analytics'); ?></p>
+        <?php
+        /* ── Calcul du score et des diagnostics ──────────────────────────── */
+        $consent_ok  = ('cookie' === $mode && $consent_on) || 'cookieless' === $mode;
+        $is_cookieless = ('cookieless' === $mode);
+        $is_session    = ($cookieless_window === 'session');
+        $tracking_off  = !empty($o['disable_tracking']);
+        $has_geo       = $geo_on;
+        $has_policy    = (bool) get_option('wp_page_for_privacy_policy');
+
+        /* ── Définition des points de contrôle ──────────────────────────── */
+        /* Chaque point : level = ok | warn | danger | info | exempt */
+        $diag = array();
+
+        /* 1. MODE DE TRACKING */
+        if ($tracking_off) {
+            $diag[] = array(
+                'level'  => 'info',
+                'cat'    => __('Tracking', 'always-analytics'),
+                'title'  => __('Tracking désactivé', 'always-analytics'),
+                'detail' => __('Aucune donnée n\'est collectée. Du point de vue RGPD, c\'est la situation la plus simple qui soit : pas de collecte = pas d\'obligation. En contrepartie, vos statistiques sont à l\'arrêt.', 'always-analytics'),
+                'laws'   => array(),
+                'action' => null,
+                'tab'    => 'tracking',
+            );
+        } elseif ($is_cookieless) {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Mode de tracking', 'always-analytics'),
+                'title'  => __('Mode sans cookie — aucun dépôt sur l\'appareil du visiteur', 'always-analytics'),
+                'detail' => __('Excellent choix. En mode sans cookie, rien n\'est écrit sur l\'appareil du visiteur. L\'identification repose sur un hash anonyme recalculé à chaque session ou chaque jour, sans aucune persistance. Ce type de mesure est explicitement reconnu comme exempté de consentement par la CNIL.', 'always-analytics'),
+                'laws'   => array('CNIL délibération n°2020-091 — exemption mesure d\'audience', 'Directive ePrivacy 2002/58/CE art. 5.3'),
+                'action' => null,
+                'tab'    => 'tracking',
+            );
+        } else {
+            $diag[] = array(
+                'level'  => 'info',
+                'cat'    => __('Mode de tracking', 'always-analytics'),
+                'title'  => __('Mode avec cookie — suivi multi-jours activé', 'always-analytics'),
+                'detail' => __('Un cookie est déposé chez le visiteur pour le reconnaître sur plusieurs visites. Ce mode offre des statistiques plus précises (retours, parcours multi-sessions), mais implique une obligation légale stricte : vous devez recueillir le consentement du visiteur AVANT de déposer le cookie.', 'always-analytics'),
+                'laws'   => array('RGPD art. 7 — conditions du consentement', 'Directive ePrivacy 2002/58/CE art. 5.3 — cookies nécessitant un consentement'),
+                'action' => null,
+                'tab'    => 'tracking',
+            );
+        }
+
+        /* 2. CONSENTEMENT */
+        if ($need_consent) {
+            $diag[] = array(
+                'level'  => 'danger',
+                'cat'    => __('Consentement', 'always-analytics'),
+                'title'  => __('Bannière manquante — cookie déposé sans accord du visiteur', 'always-analytics'),
+                'detail' => __('C\'est le point le plus critique de votre configuration. Vous utilisez des cookies de tracking, mais aucune bannière n\'est affichée pour recueillir l\'accord du visiteur. Concrètement, chaque visite sur votre site dépose un cookie sans que la personne ait pu accepter ou refuser. C\'est une infraction directement sanctionnable par la CNIL. La correction est simple : activez la bannière dans l\'onglet Consentement.', 'always-analytics'),
+                'laws'   => array('RGPD art. 7 — le consentement doit être libre, éclairé et préalable', 'Directive ePrivacy 2002/58/CE art. 5.3', 'CNIL — sanctions possibles jusqu\'à 4% du CA mondial'),
+                'action' => __('Activer la bannière →', 'always-analytics'),
+                'tab'    => 'consent',
+            );
+        } elseif ($is_cookieless) {
+            $diag[] = array(
+                'level'  => 'exempt',
+                'cat'    => __('Consentement', 'always-analytics'),
+                'title'  => __('Exempté — aucune bannière requise en mode sans cookie', 'always-analytics'),
+                'detail' => __('Vous n\'avez rien à faire ici. La CNIL a publié une liste d\'opérations de traçage exemptées de consentement, et la mesure d\'audience anonyme sans cookie en fait partie. La condition est que les données ne soient pas croisées avec d\'autres traitements ni cédées à des tiers — ce qu\'Always Analytics ne fait pas.', 'always-analytics'),
+                'laws'   => array('CNIL délibération n°2020-091 — liste des exemptions', 'Directive ePrivacy 2002/58/CE art. 5.3 — exception intérêt légitime'),
+                'action' => null,
+                'tab'    => 'consent',
+            );
+        } else {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Consentement', 'always-analytics'),
+                'title'  => __('Bannière active — les visiteurs sont informés avant tout tracking', 'always-analytics'),
+                'detail' => __('Bien configuré. La bannière s\'affiche avant tout dépôt de cookie, et le tracking ne démarre qu\'après acceptation explicite. Vous respectez le principe du consentement préalable et éclairé. Assurez-vous que les boutons "Accepter" et "Refuser" sont aussi faciles d\'accès l\'un que l\'autre (pas de "dark pattern").', 'always-analytics'),
+                'laws'   => array('RGPD art. 7 — consentement préalable, libre et éclairé', 'CNIL recommandation — égale visibilité des choix accepter/refuser'),
+                'action' => null,
+                'tab'    => 'consent',
+            );
+        }
+
+        /* 3. ANONYMISATION IP */
+        if (!$anon_ip && !$tracking_off) {
+            $diag[] = array(
+                'level'  => 'warn',
+                'cat'    => __('Données personnelles', 'always-analytics'),
+                'title'  => __('IP complète utilisée — risque sur donnée personnelle identifiante', 'always-analytics'),
+                'detail' => __('L\'adresse IP de vos visiteurs est utilisée en clair pour calculer leur identifiant. Or la CJUE (Cour de Justice de l\'UE) a confirmé en 2016 qu\'une adresse IP est une donnée personnelle car elle permet d\'identifier une personne via son fournisseur d\'accès. La solution est simple et sans impact sur vos stats : tronquez le dernier octet (192.168.1.42 → 192.168.1.0). La géolocalisation fonctionne toujours, l\'identification individuelle devient impossible.', 'always-analytics'),
+                'laws'   => array('RGPD art. 4.1 — définition donnée personnelle', 'RGPD art. 25 — privacy by design (protection dès la conception)', 'CJUE arrêt C-582/14 Breyer — IP = donnée personnelle'),
+                'action' => __('Activer l\'anonymisation →', 'always-analytics'),
+                'tab'    => 'privacy',
+            );
+        } else {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Données personnelles', 'always-analytics'),
+                'title'  => __('IP anonymisée avant tout traitement', 'always-analytics'),
+                'detail' => __('Le dernier octet IPv4 est masqué (ex : 192.168.1.42 → 192.168.1.0) avant de calculer l\'identifiant visiteur. Il est impossible de remonter à une personne précise à partir des données stockées. Vous appliquez le principe de "privacy by design" du RGPD : la protection de la vie privée est intégrée dès la conception, pas ajoutée après coup.', 'always-analytics'),
+                'laws'   => array('RGPD art. 25 — privacy by design', 'RGPD art. 5.1.c — minimisation des données'),
+                'action' => null,
+                'tab'    => 'privacy',
+            );
+        }
+
+        /* 4. RÉTENTION */
+        if (0 === $retention && !$tracking_off) {
+            $diag[] = array(
+                'level'  => 'danger',
+                'cat'    => __('Durée de conservation', 'always-analytics'),
+                'title'  => __('Rétention illimitée — les données ne sont jamais supprimées', 'always-analytics'),
+                'detail' => __('Le RGPD pose un principe fondamental appelé "limitation de la conservation" : on ne peut garder des données personnelles que le temps nécessaire à la finalité pour laquelle elles ont été collectées. Pour de la mesure d\'audience, cette finalité ne justifie pas une conservation indéfinie. La CNIL fixe un plafond clair à 13 mois (390 jours). Au-delà, chaque enregistrement en base est potentiellement illégal. Choisissez 365 jours : vous avez un historique annuel complet et êtes pleinement conforme.', 'always-analytics'),
+                'laws'   => array('RGPD art. 5.1.e — principe de limitation de la conservation', 'CNIL recommandation — 13 mois maximum pour les cookies analytics'),
+                'action' => __('Corriger dans Confidentialité →', 'always-analytics'),
+                'tab'    => 'privacy',
+            );
+        } elseif ($ret_warn && !$tracking_off) {
+            $diag[] = array(
+                'level'  => 'warn',
+                'cat'    => __('Durée de conservation', 'always-analytics'),
+                'title'  => sprintf(__('Rétention de %d jours — au-delà des 13 mois CNIL', 'always-analytics'), $retention),
+                'detail' => sprintf(__('Vous conservez les données de visite pendant %d jours, soit plus de 13 mois. La CNIL a fixé ce seuil en considérant qu\'un an de données suffit amplement pour analyser les tendances de trafic. Au-delà, la conservation doit être justifiée par un besoin spécifique documenté — ce qui est rarement le cas pour de l\'analytics standard. Passer à 365 jours vous donne un historique annuel complet en toute conformité.', 'always-analytics'), $retention),
+                'laws'   => array('RGPD art. 5.1.e — limitation de la conservation', 'CNIL recommandation — 13 mois maximum (390 jours)'),
+                'action' => __('Corriger dans Confidentialité →', 'always-analytics'),
+                'tab'    => 'privacy',
+            );
+        } else {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Durée de conservation', 'always-analytics'),
+                'title'  => sprintf(__('Rétention de %d jours — dans les limites CNIL', 'always-analytics'), $retention),
+                'detail' => __('Vos données brutes de visite sont automatiquement anonymisées après la période configurée. Les agrégats statistiques (nombre de pages vues, taux de rebond, etc.) sont conservés indéfiniment car ils ne contiennent plus aucun identifiant personnel. C\'est exactement ce que préconise la CNIL : anonymiser, pas supprimer, pour garder la valeur analytique des données.', 'always-analytics'),
+                'laws'   => array('RGPD art. 5.1.e — limitation de la conservation', 'CNIL recommandation — anonymisation après 13 mois'),
+                'action' => null,
+                'tab'    => 'privacy',
+            );
+        }
+
+        /* 5. FENÊTRE D'UNICITÉ */
+        if ($is_cookieless && !$tracking_off) {
+            if ($is_session) {
+                $diag[] = array(
+                    'level'  => 'ok',
+                    'cat'    => __('Empreinte visiteur', 'always-analytics'),
+                    'title'  => __('Fenêtre session — protection maximale, exemption CNIL assurée', 'always-analytics'),
+                    'detail' => __('C\'est le mode le plus respectueux de la vie privée. Le hash d\'identification est lié à l\'onglet du navigateur et disparaît à sa fermeture. Un même visiteur qui revient le lendemain est techniquement un nouveau visiteur : aucune persistance, aucune reconnaissance cross-session. La CNIL cite explicitement ce type de fenêtre comme critère de l\'exemption de consentement.', 'always-analytics'),
+                    'laws'   => array('CNIL délibération n°2020-091 — critères d\'exemption (fenêtre de session recommandée)'),
+                    'action' => null,
+                    'tab'    => 'privacy',
+                );
+            } else {
+                $diag[] = array(
+                    'level'  => 'info',
+                    'cat'    => __('Empreinte visiteur', 'always-analytics'),
+                    'title'  => __('Fenêtre journalière — conforme, niveau de protection légèrement moindre', 'always-analytics'),
+                    'detail' => __('Le hash est recalculé chaque jour à minuit UTC. Un visiteur peut être reconnu pendant 24h maximum, puis disparaît. C\'est conforme à l\'exemption CNIL et suffisant pour la grande majorité des sites. Si vous voulez aller encore plus loin dans la protection de la vie privée (et potentiellement rassurer des visiteurs sensibles), le mode "Session" supprime toute persistance.', 'always-analytics'),
+                    'laws'   => array('CNIL délibération n°2020-091 — exemption valide avec fenêtre courte'),
+                    'action' => null,
+                    'tab'    => 'privacy',
+                );
+            }
+        }
+
+        /* 6. GÉOLOCALISATION */
+        if ($has_geo && !$anon_ip && !$tracking_off) {
+            $diag[] = array(
+                'level'  => 'warn',
+                'cat'    => __('Géolocalisation', 'always-analytics'),
+                'title'  => __('Géoloc active sans anonymisation IP — traitement de donnée personnelle', 'always-analytics'),
+                'detail' => __('La géolocalisation détermine le pays et la ville du visiteur à partir de son adresse IP. Sans anonymisation, cette IP complète est traitée comme donnée personnelle (la CJUE l\'a confirmé). Vous pouvez continuer à géolocaliser sans risque en activant l\'anonymisation IP : l\'IP tronquée (ex : 1.2.3.0) suffit à déterminer la ville, sans identifier la personne.', 'always-analytics'),
+                'laws'   => array('RGPD art. 4.1 — IP = donnée personnelle (CJUE C-582/14)', 'RGPD art. 5.1.c — minimisation des données'),
+                'action' => __('Activer l\'anonymisation →', 'always-analytics'),
+                'tab'    => 'privacy',
+            );
+        } elseif ($has_geo && $anon_ip) {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Géolocalisation', 'always-analytics'),
+                'title'  => __('Géoloc active avec IP anonymisée — combinaison conforme', 'always-analytics'),
+                'detail' => __('L\'IP est tronquée avant la géolocalisation : la précision est maintenue au niveau ville/région, mais il est impossible de remonter à un foyer ou un individu précis. C\'est la combinaison idéale : statistiques géographiques utiles, sans traitement de donnée personnelle identifiante.', 'always-analytics'),
+                'laws'   => array('RGPD art. 25 — privacy by design', 'RGPD art. 5.1.c — minimisation des données'),
+                'action' => null,
+                'tab'    => 'tracking',
+            );
+        }
+
+        /* 7. IP NON STOCKÉE */
+        $diag[] = array(
+            'level'  => 'ok',
+            'cat'    => __('Stockage des données', 'always-analytics'),
+            'title'  => __('Adresse IP jamais écrite en base de données', 'always-analytics'),
+            'detail' => __('Always Analytics utilise l\'adresse IP uniquement en mémoire vive, le temps de calculer le hash ou de géolocaliser le visiteur. Elle n\'est jamais persistée en base. Si votre site était victime d\'une fuite de données, les adresses IP de vos visiteurs ne seraient donc pas compromises — contrairement à ce que fait la majorité des outils analytics.', 'always-analytics'),
+            'laws'   => array('RGPD art. 32 — sécurité du traitement', 'RGPD art. 5.1.c — minimisation des données collectées'),
+            'action' => null,
+            'tab'    => null,
+        );
+
+        /* 8. HASH NON RÉVERSIBLE */
+        $diag[] = array(
+            'level'  => 'ok',
+            'cat'    => __('Pseudonymisation', 'always-analytics'),
+            'title'  => __('Identifiant visiteur non réversible (SHA-256)', 'always-analytics'),
+            'detail' => __('L\'identifiant stocké en base est un hash SHA-256 : une empreinte mathématique à sens unique. Même avec un accès complet à votre base de données, il est impossible de retrouver l\'adresse IP ou l\'identité du visiteur à partir de ce hash. C\'est ce que le RGPD appelle la "pseudonymisation" — une mesure technique qui réduit significativement les risques liés aux données.', 'always-analytics'),
+            'laws'   => array('RGPD art. 4.5 — définition de la pseudonymisation', 'RGPD art. 25 — pseudonymisation recommandée comme mesure de privacy by design'),
+            'action' => null,
+            'tab'    => null,
+        );
+
+        /* 9. POLITIQUE DE CONFIDENTIALITÉ */
+        if (!$has_policy) {
+            $diag[] = array(
+                'level'  => 'warn',
+                'cat'    => __('Transparence', 'always-analytics'),
+                'title'  => __('Politique de confidentialité introuvable', 'always-analytics'),
+                'detail' => __('Le RGPD impose d\'informer les visiteurs sur les données que vous collectez, pourquoi, combien de temps, et quels sont leurs droits. Cette information doit figurer dans une politique de confidentialité accessible depuis toutes les pages. WordPress vous aide à la créer : allez dans Réglages → Confidentialité pour désigner ou créer cette page. Sans elle, vous n\'êtes pas transparent sur votre collecte, même si celle-ci est techniquement conforme.', 'always-analytics'),
+                'laws'   => array('RGPD art. 13 — obligation d\'information lors de la collecte', 'RGPD art. 14 — information des personnes concernées'),
+                'action' => __('Configurer la politique →', 'always-analytics'),
+                'tab'    => null,
+                'link'   => admin_url('options-privacy.php'),
+            );
+        } else {
+            $diag[] = array(
+                'level'  => 'ok',
+                'cat'    => __('Transparence', 'always-analytics'),
+                'title'  => __('Politique de confidentialité configurée', 'always-analytics'),
+                'detail' => __('Une page de politique de confidentialité est désignée dans WordPress. Assurez-vous qu\'elle mentionne explicitement l\'usage d\'Always Analytics : finalité (mesure d\'audience), données collectées (visites anonymes), durée de conservation, et droits des visiteurs (accès, effacement). WordPress propose un guide de rédaction directement accessible ci-dessous.', 'always-analytics'),
+                'laws'   => array('RGPD art. 13 — obligation d\'information', 'RGPD art. 15 à 22 — droits des personnes (accès, rectification, effacement)'),
+                'action' => __('Consulter le guide de rédaction →', 'always-analytics'),
+                'tab'    => null,
+                'link'   => admin_url('options-privacy.php?tab=policyguide'),
+            );
+        }
+
+        /* ── Calcul du score global ──────────────────────────────────────── */
+        /* info et exempt ne participent PAS au score (ni bonus ni malus)   */
+        $n_danger  = 0; $n_warn = 0; $n_ok = 0; $n_info = 0; $n_exempt = 0;
+        foreach ($diag as $d) {
+            if ($d['level'] === 'danger')      $n_danger++;
+            elseif ($d['level'] === 'warn')    $n_warn++;
+            elseif ($d['level'] === 'ok')      $n_ok++;
+            elseif ($d['level'] === 'exempt')  $n_exempt++;
+            else                               $n_info++;
+        }
+        /* On ne compte que les checks "réels" : ok + warn + danger */
+        $scored_checks = $n_ok + $n_warn + $n_danger;
+        if ($scored_checks > 0) {
+            $score_pts  = $n_ok * 10 - $n_danger * 20 - $n_warn * 5;
+            $score_pct  = max(0, min(100, (int) round(($score_pts / ($scored_checks * 10)) * 100)));
+        } else {
+            $score_pct = 100;
+        }
+
+        if ($n_danger > 0)      { $score_label = __('Non conforme', 'always-analytics');   $score_color = '#dc2626'; $score_bg = 'rgba(220,38,38,.08)'; }
+        elseif ($n_warn > 0)    { $score_label = __('À améliorer', 'always-analytics');     $score_color = '#d97706'; $score_bg = 'rgba(217,119,6,.08)'; }
+        else                    { $score_label = __('Conforme RGPD', 'always-analytics');   $score_color = '#059669'; $score_bg = 'rgba(5,150,105,.08)'; }
+
+        /* ── SVG icônes inline ───────────────────────────────────────────── */
+        $ico_ok     = '<svg class="as-diag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>';
+        $ico_warn   = '<svg class="as-diag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+        $ico_danger = '<svg class="as-diag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
+        $ico_info   = '<svg class="as-diag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="9" y1="18" x2="15" y2="18"/><line x1="10" y1="22" x2="14" y2="22"/><path d="M15.09 14c.18-.98.65-1.74 1.41-2.5A4.65 4.65 0 0 0 18 8 6 6 0 0 0 6 8c0 1 .23 2.23 1.5 3.5A4.61 4.61 0 0 1 8.91 14"/></svg>';
+        $ico_exempt = '<svg class="as-diag-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>';
+        ?>
+
+        <!-- Score global -->
+        <div class="as-rgpd-score" style="background:<?php echo esc_attr($score_bg); ?>; border-color:<?php echo esc_attr($score_color); ?>30;">
+            <div class="as-rgpd-score__gauge">
+                <svg viewBox="0 0 120 120" class="as-score-svg">
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="<?php echo esc_attr($score_color); ?>20" stroke-width="10"/>
+                    <circle cx="60" cy="60" r="52" fill="none" stroke="<?php echo esc_attr($score_color); ?>" stroke-width="10"
+                            stroke-dasharray="<?php echo esc_attr(round(326.726 * $score_pct / 100, 2)); ?> 326.726"
+                            stroke-linecap="round" transform="rotate(-90 60 60)"/>
+                    <text x="60" y="56" text-anchor="middle" font-size="26" font-weight="700" fill="<?php echo esc_attr($score_color); ?>"><?php echo esc_html($score_pct); ?></text>
+                    <text x="60" y="72" text-anchor="middle" font-size="12" fill="<?php echo esc_attr($score_color); ?>">/ 100</text>
+                </svg>
             </div>
-            <div class="as-checklist">
-
-                <?php
-$consent_ok = ('cookie' === $mode && $consent_on) || 'cookieless' === $mode;
-$rows = array(
-        array(
-        'ok' => true,
-        'label' => __('IP non stockée', 'always-analytics'),
-        'detail' => __('L\'IP est utilisée en mémoire pour le hash/géoloc, jamais écrite en base.', 'always-analytics'),
-        'badge' => __('Conforme', 'always-analytics'),
-        'bmod' => '',
-    ),
-        array(
-        'ok' => $anon_ip,
-        'label' => __('Anonymisation IP', 'always-analytics'),
-        'detail' => __('Tronque le dernier octet IPv4 avant le hachage et la géoloc.', 'always-analytics'),
-        'badge' => $anon_ip ? __('Activé', 'always-analytics') : __('Désactivé', 'always-analytics'),
-        'bmod' => $anon_ip ? '' : 'mod-warn',
-    ),
-        array(
-        'ok' => true,
-        'label' => __('Hash non réversible', 'always-analytics'),
-        'detail' => __('SHA-256 irréversible, pas de table hash → identité.', 'always-analytics'),
-        'badge' => __('Conforme', 'always-analytics'),
-        'bmod' => '',
-    ),
-        array(
-        'ok' => !$ret_warn,
-        'label' => __('Rétention configurable', 'always-analytics'),
-        'detail' => $ret_warn
-        ? (0 === $retention ? __('Illimité — CNIL recommande 13 mois max.', 'always-analytics') : sprintf(__('%d j dépasse le seuil CNIL (390 j).', 'always-analytics'), $retention))
-        : __('Données anonymisées après la période, agrégats conservés.', 'always-analytics'),
-        'badge' => 0 === $retention ? __('Illimité', 'always-analytics') : esc_html($retention . 'j'),
-        'bmod' => $ret_warn ? 'mod-warn' : '',
-    ),
-        array(
-        'ok' => true,
-        'label' => __('Export / Effacement WP', 'always-analytics'),
-        'detail' => __('Outils → Exporter/Effacer les données personnelles.', 'always-analytics'),
-        'badge' => __('Conforme', 'always-analytics'),
-        'bmod' => '',
-    ),
-
-        array(
-        'ok' => $consent_ok,
-        'label' => __('Consentement', 'always-analytics'),
-        'detail' => $need_consent
-        ? __('Mode cookie SANS bannière — activez-la dans l\'onglet Consentement.', 'always-analytics')
-        : ('cookieless' === $mode ? __('Pas de cookie, hash journalier éligible à l\'exemption CNIL.', 'always-analytics') : __('Tracking bloqué avant acceptation.', 'always-analytics')),
-        'badge' => $need_consent ? __('Consentement requis', 'always-analytics') : ('cookieless' === $mode ? __('Exemption CNIL', 'always-analytics') : __('Bannière active', 'always-analytics')),
-        'bmod' => $need_consent ? 'mod-danger' : '',
-    ),
-        array(
-        'ok' => true,
-        'label' => __('Durée des cookies', 'always-analytics'),
-        'detail' => __('Visiteur : 13 mois. Consentement : 6 mois. Conforme CNIL.', 'always-analytics'),
-        'badge' => __('CNIL OK', 'always-analytics'),
-        'bmod' => '',
-    ),
-);
-foreach ($rows as $r):
-?>
-                <div class="as-checklist__row">
-                    <span class="as-checklist__icon"><?php echo $r['ok'] ? '<svg class="as-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>' : '<svg class="as-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>'; ?></span>
-                    <div class="as-checklist__body">
-                        <span class="as-checklist__label"><?php echo esc_html($r['label']); ?></span>
-                        <span class="as-checklist__detail"><?php echo esc_html($r['detail']); ?></span>
-                    </div>
-                    <span class="as-checklist__badge <?php echo esc_attr($r['bmod']); ?>"><?php echo esc_html($r['badge']); ?></span>
+            <div class="as-rgpd-score__body">
+                <div class="as-rgpd-score__label" style="color:<?php echo esc_attr($score_color); ?>"><?php echo esc_html($score_label); ?></div>
+                <div class="as-rgpd-score__sub">
+                    <?php if ($n_danger > 0): ?>
+                        <span class="as-score-chip mod-danger"><?php echo esc_html($n_danger); ?> point<?php echo $n_danger > 1 ? 's' : ''; ?> critique<?php echo $n_danger > 1 ? 's' : ''; ?></span>
+                    <?php endif; ?>
+                    <?php if ($n_warn > 0): ?>
+                        <span class="as-score-chip mod-warn"><?php echo esc_html($n_warn); ?> avertissement<?php echo $n_warn > 1 ? 's' : ''; ?></span>
+                    <?php endif; ?>
+                    <?php if ($n_ok + $n_exempt > 0): ?>
+                        <span class="as-score-chip mod-ok"><?php echo esc_html($n_ok + $n_exempt); ?> point<?php echo ($n_ok + $n_exempt) > 1 ? 's' : ''; ?> conforme<?php echo ($n_ok + $n_exempt) > 1 ? 's' : ''; ?></span>
+                    <?php endif; ?>
+                    <?php if ($n_info > 0): ?>
+                        <span class="as-score-chip mod-info"><?php echo esc_html($n_info); ?> conseil<?php echo $n_info > 1 ? 's' : ''; ?> pour aller plus loin</span>
+                    <?php endif; ?>
                 </div>
-                <?php
-endforeach; ?>
-
-                <!-- Ligne spéciale : Politique de confidentialité avec lien -->
-                <div class="as-checklist__row as-checklist__row--info">
-                    <span class="as-checklist__icon as-checklist__icon--info">
-                        <svg class="as-check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    </span>
-                    <div class="as-checklist__body">
-                        <span class="as-checklist__label"><?php esc_html_e('Politique de confidentialité', 'always-analytics'); ?></span>
-                        <span class="as-checklist__detail">
-                            <?php esc_html_e('Texte suggéré à insérer dans votre politique :', 'always-analytics'); ?>
-                            <a href="<?php echo esc_url(admin_url('options-privacy.php?tab=policyguide')); ?>" class="as-checklist__link" target="_blank">
-                                <?php esc_html_e('Réglages → Confidentialité → Guide', 'always-analytics'); ?>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;vertical-align:middle;margin-left:2px;"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                            </a>
-                        </span>
-                    </div>
-                </div>
-
+                <p class="as-rgpd-score__desc">
+                    <?php if ($n_danger > 0): ?>
+                        <?php esc_html_e('Des actions immédiates sont nécessaires pour respecter le RGPD et éviter tout risque de sanction CNIL. Suivez les recommandations ci-dessous.', 'always-analytics'); ?>
+                    <?php elseif ($n_warn > 0): ?>
+                        <?php esc_html_e('Votre configuration est globalement correcte. Quelques ajustements permettront d\'atteindre la conformité totale recommandée par la CNIL.', 'always-analytics'); ?>
+                    <?php else: ?>
+                        <?php esc_html_e('Félicitations ! Votre configuration respecte l\'ensemble des recommandations CNIL. Aucune action requise.', 'always-analytics'); ?>
+                    <?php endif; ?>
+                </p>
             </div>
         </div>
+        <p class="as-rgpd-score__scope">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;flex-shrink:0;vertical-align:middle;margin-right:4px;opacity:.6"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <?php esc_html_e('Ce score évalue uniquement la configuration d\'Always Analytics. Il ne couvre pas les autres traitements de données de votre site (formulaires, commentaires, plugins tiers, publicité…) qui peuvent nécessiter des mesures RGPD complémentaires.', 'always-analytics'); ?>
+        </p>
+
+        <?php
+        /* ── Groupes : priorités d'abord ────────────────────────────────── */
+        $order = array('danger', 'warn', 'ok', 'exempt', 'info');
+        usort($diag, function ($a, $b) use ($order) {
+            return array_search($a['level'], $order, true) - array_search($b['level'], $order, true);
+        });
+
+        $level_labels = array(
+            'danger' => __('Action requise', 'always-analytics'),
+            'warn'   => __('Avertissement', 'always-analytics'),
+            'ok'     => __('Conforme', 'always-analytics'),
+            'exempt' => __('Exempté', 'always-analytics'),
+            'info'   => __('Pour aller plus loin', 'always-analytics'),
+        );
+        $level_icons = array(
+            'danger' => $ico_danger,
+            'warn'   => $ico_warn,
+            'ok'     => $ico_ok,
+            'exempt' => $ico_exempt,
+            'info'   => $ico_info,
+        );
+        ?>
+
+        <!-- Liste des diagnostics -->
+        <div class="as-diag-list">
+            <?php foreach ($diag as $d): ?>
+            <div class="as-diag-item as-diag-item--<?php echo esc_attr($d['level']); ?>">
+                <div class="as-diag-item__icon">
+                    <?php echo $level_icons[$d['level']]; ?>
+                </div>
+                <div class="as-diag-item__body">
+                    <div class="as-diag-item__head">
+                        <span class="as-diag-item__cat"><?php echo esc_html($d['cat']); ?></span>
+                        <span class="as-diag-item__badge as-diag-badge--<?php echo esc_attr($d['level']); ?>"><?php echo esc_html($level_labels[$d['level']]); ?></span>
+                    </div>
+                    <strong class="as-diag-item__title"><?php echo esc_html($d['title']); ?></strong>
+                    <p class="as-diag-item__detail"><?php echo esc_html($d['detail']); ?></p>
+                    <?php if (!empty($d['laws'])): ?>
+                    <div class="as-diag-item__laws">
+                        <?php foreach ($d['laws'] as $law): ?>
+                        <span class="as-law-tag as-law-tag--diag"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:10px;height:10px;flex-shrink:0;vertical-align:middle;margin-right:3px"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><?php echo esc_html($law); ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                    <?php endif; ?>
+                    <?php if (!empty($d['action'])): ?>
+                        <?php if (!empty($d['link'])): ?>
+                            <a href="<?php echo esc_url($d['link']); ?>" class="as-diag-item__cta" target="_blank">
+                                <?php echo esc_html($d['action']); ?>
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px;vertical-align:middle;margin-left:3px"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                            </a>
+                        <?php else: ?>
+                            <a href="#" class="as-diag-item__cta aa-settings-tab-link" data-tab="<?php echo esc_attr($d['tab']); ?>">
+                                <?php echo esc_html($d['action']); ?>
+                            </a>
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php endforeach; ?>
+        </div>
+
+        <!-- Note légale -->
+        <div class="as-rgpd-footer-note">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;flex-shrink:0;opacity:.5;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span><?php esc_html_e('Ce diagnostic est basé sur les recommandations CNIL (délibération n°2020-091) et le RGPD (règlement EU 2016/679). Il ne constitue pas un avis juridique. En cas de doute, consultez un délégué à la protection des données (DPO).', 'always-analytics'); ?></span>
+        </div>
+
     </div>
 
     <div class="aa-footer">
@@ -774,6 +1139,14 @@ a.as-chip:hover { opacity: .8; }
 .as-row__desc  { font-size: 12px; color: var(--aa-text-secondary); line-height: 1.6; }
 .as-row__control { padding-top: 2px; }
 .as-row__control--inline { display: flex; gap: 20px; flex-wrap: wrap; align-items: flex-start; }
+.as-row__alert {
+    grid-column: 1 / -1;
+    padding: 0 0 16px;
+}
+.as-row__alert .as-inline-alert {
+    margin-top: 0;
+    border-radius: 8px;
+}
 
 /* ─── Toggle switch ────────────────────────────────────────────────────────── */
 .as-toggle { display: inline-flex; align-items: center; gap: 10px; cursor: pointer; user-select: none; }
@@ -896,6 +1269,26 @@ a.as-chip:hover { opacity: .8; }
 .as-note__icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; opacity: .6; }
 .as-note strong { display: block; font-weight: 600; color: var(--aa-text); margin-bottom: 3px; }
 
+/* ─── Notice banners ────────────────────────────────────────────────────────── */
+.as-notice {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 14px 18px;
+    border-radius: var(--aa-radius);
+    font-size: 13px; line-height: 1.6;
+    margin-top: 12px; margin-bottom: 4px;
+    border: 1px solid transparent;
+}
+.as-notice--success {
+    background: rgba(16,185,129,.08);
+    border-color: rgba(16,185,129,.25);
+    color: #065f46;
+}
+.as-notice__icon {
+    width: 18px; height: 18px; flex-shrink: 0; margin-top: 1px;
+    stroke: #059669;
+}
+.as-notice strong { display: block; font-weight: 600; margin-bottom: 3px; color: #065f46; }
+
 /* ─── Save bar ─────────────────────────────────────────────────────────────── */
 .as-save-bar {
     position: sticky; bottom: 16px; z-index: 99;
@@ -953,31 +1346,237 @@ a.as-chip:hover { opacity: .8; }
     .as-tab { font-size: 12px; padding: 7px 12px; }
     .as-status-banner { flex-direction: column; align-items: flex-start; }
 }
+
+/* ─── RGPD Diagnostic system ────────────────────────────────────────────────── */
+
+/* Score card */
+.as-rgpd-score {
+    display: flex; align-items: center; gap: 24px;
+    padding: 24px 28px;
+    border: 1px solid;
+    border-radius: var(--aa-radius);
+    margin-bottom: 20px;
+    background: #fff;
+}
+.as-rgpd-score__gauge { flex-shrink: 0; }
+.as-score-svg { width: 100px; height: 100px; }
+.as-rgpd-score__body { flex: 1; }
+.as-rgpd-score__label { font-size: 20px; font-weight: 700; margin-bottom: 8px; }
+.as-rgpd-score__sub { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.as-rgpd-score__desc { font-size: 12px; color: var(--aa-text-secondary); margin: 0 0 8px; line-height: 1.6; }
+.as-rgpd-score__scope {
+    font-size: 11px; color: var(--aa-text-secondary);
+    line-height: 1.55; margin: 12px 0 0;
+    padding: 8px 12px;
+    background: var(--aa-bg);
+    border: 1px solid var(--aa-border);
+    border-radius: 6px;
+    display: flex; align-items: flex-start; gap: 4px;
+}
+.as-score-chip {
+    font-size: 11px; font-weight: 600; padding: 2px 10px;
+    border-radius: 20px; border: 1px solid transparent;
+}
+.as-score-chip.mod-danger { background: rgba(220,38,38,.1); color: #b91c1c; border-color: rgba(220,38,38,.2); }
+.as-score-chip.mod-warn   { background: rgba(217,119,6,.1);  color: #92400e; border-color: rgba(217,119,6,.2); }
+.as-score-chip.mod-ok     { background: rgba(5,150,105,.1);  color: #065f46; border-color: rgba(5,150,105,.2); }
+.as-score-chip.mod-info   { background: rgba(100,116,139,.1); color: #475569; border-color: rgba(100,116,139,.2); }
+.as-rgpd-score__desc { font-size: 13px; color: var(--aa-text-secondary); line-height: 1.6; margin: 0; }
+
+/* Diagnostic list */
+.as-diag-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+.as-diag-item {
+    display: flex; gap: 14px; align-items: flex-start;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid var(--aa-border);
+    border-left: 4px solid transparent;
+    border-radius: var(--aa-radius);
+    box-shadow: var(--aa-shadow);
+    transition: box-shadow .15s;
+}
+.as-diag-item:hover { box-shadow: 0 2px 12px rgba(0,0,0,.08); }
+.as-diag-item--danger { border-left-color: #dc2626; }
+.as-diag-item--warn   { border-left-color: #d97706; }
+.as-diag-item--ok     { border-left-color: var(--aa-border); }
+.as-diag-item--exempt { border-left-color: var(--aa-border); }
+.as-diag-item--info   { border-left-color: var(--aa-border); border-left-style: solid; opacity: .85; }
+
+.as-diag-item__icon {
+    flex-shrink: 0; width: 32px; height: 32px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    margin-top: 1px;
+}
+.as-diag-item--danger .as-diag-item__icon { background: rgba(220,38,38,.1); }
+.as-diag-item--warn   .as-diag-item__icon { background: rgba(217,119,6,.1); }
+.as-diag-item--ok     .as-diag-item__icon { background: rgba(5,150,105,.1); }
+.as-diag-item--exempt .as-diag-item__icon { background: rgba(108,99,255,.1); }
+.as-diag-item--info   .as-diag-item__icon { background: rgba(100,116,139,.08); }
+.as-diag-item--info   .as-diag-icon { stroke: #94a3b8; }
+.as-diag-icon { width: 16px; height: 16px; }
+.as-diag-item--danger .as-diag-icon { stroke: #dc2626; }
+.as-diag-item--warn   .as-diag-icon { stroke: #d97706; }
+.as-diag-item--ok     .as-diag-icon { stroke: #059669; }
+.as-diag-item--exempt .as-diag-icon { stroke: #6c63ff; }
+.as-diag-item--info   .as-diag-icon { stroke: #0ea5e9; }
+
+.as-diag-item__body { flex: 1; min-width: 0; }
+.as-diag-item__head {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 4px;
+}
+.as-diag-item__cat {
+    font-size: 11px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .05em; color: var(--aa-text-secondary);
+}
+.as-diag-item__badge {
+    font-size: 10px; font-weight: 700; padding: 1px 8px;
+    border-radius: 20px; border: 1px solid transparent;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.as-diag-badge--danger { background: rgba(220,38,38,.1); color: #b91c1c; border-color: rgba(220,38,38,.2); }
+.as-diag-badge--warn   { background: rgba(217,119,6,.1);  color: #92400e; border-color: rgba(217,119,6,.2); }
+.as-diag-badge--ok     { background: rgba(5,150,105,.1);  color: #065f46; border-color: rgba(5,150,105,.2); }
+.as-diag-badge--exempt { background: rgba(108,99,255,.1); color: #4c1d95; border-color: rgba(108,99,255,.2); }
+.as-diag-badge--info   { background: rgba(100,116,139,.08); color: #475569; border-color: rgba(100,116,139,.15); }
+
+.as-diag-item__title { display: block; font-size: 13px; font-weight: 600; color: var(--aa-text); margin-bottom: 5px; }
+.as-diag-item__detail { font-size: 12px; color: var(--aa-text-secondary); line-height: 1.65; margin: 0 0 7px; }
+.as-diag-item__laws {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin: 4px 0 8px;
+}
+.as-law-tag--diag {
+    font-size: 10px; font-weight: 500;
+    padding: 2px 8px; border-radius: 4px;
+    background: var(--aa-bg); color: var(--aa-text-secondary);
+    border: 1px solid var(--aa-border);
+}
+.as-diag-item__cta {
+    display: inline-flex; align-items: center;
+    font-size: 12px; font-weight: 600;
+    color: var(--aa-primary) !important;
+    text-decoration: none; transition: opacity .15s;
+}
+.as-diag-item__cta:hover { opacity: .75; }
+
+/* Footer note */
+.as-rgpd-footer-note {
+    display: flex; gap: 8px; align-items: flex-start;
+    font-size: 11px; color: var(--aa-text-secondary);
+    line-height: 1.6; padding: 12px 16px;
+    background: var(--aa-bg); border-radius: var(--aa-radius);
+    border: 1px solid var(--aa-border);
+    margin-bottom: 16px;
+}
+
+@media (max-width: 600px) {
+    .as-rgpd-score { flex-direction: column; gap: 16px; }
+    .as-score-svg { width: 80px; height: 80px; }
+    .as-diag-item { padding: 14px 16px; }
+}
+</style>
+
+<style>
+/* ─── Inline RGPD alerts ────────────────────────────────────────────────────── */
+.as-inline-alert {
+    display: flex; gap: 10px; align-items: flex-start;
+    margin-top: 10px; padding: 11px 14px;
+    border-radius: 8px; font-size: 12px; line-height: 1.6;
+    border: 1px solid transparent;
+}
+.as-inline-alert.as-inline-alert--hidden { display: none; }
+.as-inline-alert.as-inline-alert--danger {
+    background: rgba(220,38,38,.07); border-color: rgba(220,38,38,.25); color: #7f1d1d;
+}
+.as-inline-alert.as-inline-alert--warn {
+    background: rgba(217,119,6,.07);  border-color: rgba(217,119,6,.25);  color: #78350f;
+}
+.as-inline-alert.as-inline-alert--ok-hidden { display: none; }
+.as-inline-alert__icon {
+    flex-shrink: 0; width: 16px; height: 16px; margin-top: 1px;
+}
+.as-inline-alert--danger .as-inline-alert__icon { stroke: #dc2626; }
+.as-inline-alert--warn   .as-inline-alert__icon { stroke: #d97706; }
+.as-inline-alert strong { display: block; font-weight: 700; margin-bottom: 2px; }
+.as-inline-alert__laws {
+    display: flex; flex-wrap: wrap; gap: 5px;
+    margin: 7px 0 5px;
+}
+.as-law-tag {
+    display: inline-flex; align-items: center;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 4px;
+    background: rgba(0,0,0,.05); color: inherit;
+    border: 1px solid rgba(0,0,0,.1);
+    white-space: nowrap;
+}
+.as-inline-alert--danger .as-law-tag { background: rgba(220,38,38,.08); border-color: rgba(220,38,38,.15); }
+.as-inline-alert--warn   .as-law-tag { background: rgba(217,119,6,.08);  border-color: rgba(217,119,6,.15); }
+.as-inline-alert__link {
+    display: inline-block; margin-top: 5px;
+    font-weight: 600; font-size: 12px;
+    color: var(--aa-primary) !important; text-decoration: none;
+}
+.as-inline-alert__link:hover { text-decoration: underline; }
 </style>
 
 <script>
 (function () {
     'use strict';
-    var tabs   = document.querySelectorAll('.as-tab');
-    var panels = document.querySelectorAll('.as-panel');
+    var tabs    = document.querySelectorAll('.as-tab');
+    var panels  = document.querySelectorAll('.as-panel');
     var savebar = document.getElementById('aa-save-bar');
+    var tabField = document.getElementById('aa-active-tab-field');
     var formTabs = ['tracking','privacy','consent','performance'];
+    var STORE_KEY = 'aa_active_tab';
 
     function show(tab) {
         tabs.forEach(function(t)   { t.classList.toggle('active', t.dataset.tab === tab); });
         panels.forEach(function(p) { p.classList.toggle('active', p.dataset.panel === tab); });
         if (savebar) savebar.style.display = formTabs.indexOf(tab) !== -1 ? '' : 'none';
+        if (tabField) tabField.value = tab;
     }
 
-    tabs.forEach(function(t) { t.addEventListener('click', function() { show(t.dataset.tab); }); });
+    tabs.forEach(function(t) {
+        t.addEventListener('click', function() {
+            show(t.dataset.tab);
+            try { sessionStorage.setItem(STORE_KEY, t.dataset.tab); } catch(e) {}
+        });
+    });
 
     document.querySelectorAll('.aa-settings-tab-link').forEach(function(a) {
         a.addEventListener('click', function(e) {
             e.preventDefault();
-            if (a.dataset.tab) { show(a.dataset.tab); window.scrollTo({top:0,behavior:'smooth'}); }
+            if (a.dataset.tab) {
+                show(a.dataset.tab);
+                try { sessionStorage.setItem(STORE_KEY, a.dataset.tab); } catch(e) {}
+                window.scrollTo({top:0,behavior:'smooth'});
+            }
         });
     });
 
-    if (window.location.hash === '#tab-consent') show('consent');
+    /* Mémoriser l'onglet actif avant soumission du formulaire */
+    var form = document.getElementById('aa-settings-form');
+    if (form) {
+        form.addEventListener('submit', function() {
+            var active = document.querySelector('.as-tab.active');
+            if (active) {
+                try { sessionStorage.setItem(STORE_KEY, active.dataset.tab); } catch(e) {}
+            }
+        });
+    }
+
+    /* Restaurer l'onglet après sauvegarde (settings-updated=true dans l'URL) */
+    var urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('settings-updated') === 'true') {
+        try {
+            var saved = sessionStorage.getItem(STORE_KEY);
+            if (saved) { show(saved); sessionStorage.removeItem(STORE_KEY); }
+        } catch(e) {}
+    } else if (window.location.hash === '#tab-consent') {
+        show('consent');
+    }
 })();
 </script>

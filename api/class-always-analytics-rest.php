@@ -112,6 +112,15 @@ class Always_Analytics_Rest {
             ) );
         }
 
+        // ── Endpoint sources de tracking ──────────────────────────────────────
+        register_rest_route( self::NAMESPACE, '/hit-sources', array(
+            'methods'             => 'GET',
+            'callback'            => array( __CLASS__, 'get_hit_sources' ),
+            'permission_callback' => function () {
+                return current_user_can( 'manage_options' );
+            },
+        ) );
+
         // ── Endpoints campagnes ────────────────────────────────────────────────
         register_rest_route( self::NAMESPACE, '/campaigns', array(
             array(
@@ -562,21 +571,38 @@ class Always_Analytics_Rest {
         $table  = $wpdb->prefix . 'aa_hits';
         $limit  = absint( $request->get_param( 'limit' ) ?: 20 );
 
-        // Sessions (pas pages vues) : un visiteur qui charge 10 pages depuis Google
-        // ne compte qu'une fois. On prend le premier hit de chaque session (MIN hit_at)
-        // pour rattacher la session à son référent d'entrée.
-        $sql    = "SELECT referrer_domain,
-                          COUNT(DISTINCT session_id)   as hits,
-                          COUNT(DISTINCT visitor_hash) as unique_visitors
-                   FROM {$table}
-                   WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND referrer_domain != ''";
-        $args   = array( $params['from_utc'], $params['to_utc'] );
+        // Sessions avec référent
+        $sql  = "SELECT referrer_domain,
+                        COUNT(DISTINCT session_id)   as hits,
+                        COUNT(DISTINCT visitor_hash) as unique_visitors
+                 FROM {$table}
+                 WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND referrer_domain != ''";
+        $args = array( $params['from_utc'], $params['to_utc'] );
         if ( ! empty( $params['device'] ) ) { $sql .= ' AND device_type = %s'; $args[] = $params['device']; }
         $sql   .= ' GROUP BY referrer_domain ORDER BY hits DESC LIMIT %d';
         $args[] = $limit;
 
         // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
-        return rest_ensure_response( $wpdb->get_results( $wpdb->prepare( $sql, $args ) ) );
+        $rows = $wpdb->get_results( $wpdb->prepare( $sql, $args ) );
+
+        // Sessions sans référent (trafic direct)
+        $sql_direct  = "SELECT COUNT(DISTINCT session_id) as hits, COUNT(DISTINCT visitor_hash) as unique_visitors
+                        FROM {$table}
+                        WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0 AND (referrer_domain = '' OR referrer_domain IS NULL)";
+        $args_direct = array( $params['from_utc'], $params['to_utc'] );
+        if ( ! empty( $params['device'] ) ) { $sql_direct .= ' AND device_type = %s'; $args_direct[] = $params['device']; }
+
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery, WordPress.DB.PreparedSQL.NotPrepared
+        $direct = $wpdb->get_row( $wpdb->prepare( $sql_direct, $args_direct ) );
+        if ( $direct && (int) $direct->hits > 0 ) {
+            $rows[] = (object) array(
+                'referrer_domain' => '',
+                'hits'            => $direct->hits,
+                'unique_visitors' => $direct->unique_visitors,
+            );
+        }
+
+        return rest_ensure_response( $rows );
     }
 
     // ── /countries ────────────────────────────────────────────────────────────
@@ -1335,6 +1361,201 @@ class Always_Analytics_Rest {
         } );
 
         return rest_ensure_response( array_slice( $scored, 0, $limit ) );
+    }
+
+    // ── /hit-sources ──────────────────────────────────────────────────────────
+
+    /**
+     * Retourne la distribution des sources de tracking (hit_source) pour la période.
+     *
+     * Sources possibles :
+     *   js              — hit JavaScript normal (mode cookieless ou cookie sans bannière)
+     *   js_cookieless   — hit JS en mode cookie mais sans visitorId (fallback cookieless auto)
+     *   pre_consent     — hit JS envoyé avant réponse à la bannière (mode cookie+consent)
+     *                     Note : ces hits sont is_superseded=1 s'ils ont été fusionnés.
+     *                     On les compte TOUS (superseded ou non) pour montrer la réalité du trafic.
+     *   noscript        — pixel <noscript> (visiteur sans JavaScript)
+     *   cookie          — hit JS avec cookie visitorId actif (si hit_source='js' en mode cookie)
+     *
+     * Le champ `is_superseded` est exclu des comptages principaux (comme partout dans le plugin)
+     * sauf pour les pre_consent dont on veut la réalité complète.
+     */
+    public static function get_hit_sources( $request ) {
+        global $wpdb;
+        self::no_cache_headers();
+
+        $params = self::get_date_params( $request );
+        $table  = $wpdb->prefix . 'aa_hits';
+        $from   = $params['from_utc'];
+        $to     = $params['to_utc'];
+
+        // ── 1. Distribution par hit_source ────────────────────────────────────
+        // On inclut is_superseded=1 (hits pre_consent fusionnés) pour avoir la
+        // vraie réalité de la collecte — avec un flag `superseded` pour les distinguer.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $rows = $wpdb->get_results( $wpdb->prepare(
+            "SELECT
+                hit_source,
+                COUNT(*)                        AS hits,
+                COUNT(DISTINCT visitor_hash)    AS unique_visitors,
+                COUNT(DISTINCT session_id)      AS sessions,
+                SUM(is_superseded)              AS superseded_count
+             FROM {$table}
+             WHERE hit_at >= %s AND hit_at <= %s
+             GROUP BY hit_source
+             ORDER BY hits DESC",
+            $from, $to
+        ) );
+
+        // ── 2. Total général (is_superseded=0 uniquement = même base que le reste du dashboard)
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $totals = $wpdb->get_row( $wpdb->prepare(
+            "SELECT
+                COUNT(*)                     AS total_hits,
+                COUNT(DISTINCT visitor_hash) AS total_uv,
+                COUNT(DISTINCT session_id)   AS total_sessions
+             FROM {$table}
+             WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0",
+            $from, $to
+        ) );
+
+        // ── 3. Tendance temporelle par source (pour mini-sparkline) ────────────
+        // Agrégation journalière si plage > 1 jour, horaire sinon.
+        $tz_offset_seconds = (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS );
+        $tz_str = sprintf( '%+03d:00', (int) round( $tz_offset_seconds / HOUR_IN_SECONDS ) );
+        $is_today = $params['is_today'];
+
+        if ( $is_today ) {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $trend = $wpdb->get_results( $wpdb->prepare(
+                "SELECT
+                    hit_source,
+                    HOUR(hit_at) AS period,
+                    COUNT(*) AS hits
+                 FROM {$table}
+                 WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                 GROUP BY hit_source, HOUR(hit_at)
+                 ORDER BY hit_source, period ASC",
+                $from, $to
+            ) );
+        } else {
+            // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+            $trend = $wpdb->get_results( $wpdb->prepare(
+                "SELECT
+                    hit_source,
+                    DATE(CONVERT_TZ(hit_at, '+00:00', %s)) AS period,
+                    COUNT(*) AS hits
+                 FROM {$table}
+                 WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+                 GROUP BY hit_source, DATE(CONVERT_TZ(hit_at, '+00:00', %s))
+                 ORDER BY hit_source, period ASC",
+                $tz_str, $from, $to, $tz_str
+            ) );
+        }
+
+        // ── 4. Taux de nouveaux visiteurs par source ──────────────────────────
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $new_vis = $wpdb->get_results( $wpdb->prepare(
+            "SELECT
+                hit_source,
+                SUM(is_new_visitor)                                              AS new_visitors,
+                COUNT(DISTINCT CASE WHEN is_new_visitor = 1 THEN visitor_hash END) AS new_uv
+             FROM {$table}
+             WHERE hit_at >= %s AND hit_at <= %s AND is_superseded = 0
+             GROUP BY hit_source",
+            $from, $to
+        ) );
+
+        // ── 5. Distribution temporelle (pour le graphique global) ─────────────
+        // Nb de hits par source, groupés par heure/jour.
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery
+        $timeline_sources = array( 'js', 'js_cookieless', 'pre_consent', 'noscript' );
+
+        // ── 6. Assemblage de la réponse ───────────────────────────────────────
+        $total_hits = $totals ? (int) $totals->total_hits : 1;
+
+        // Index par source
+        $new_vis_idx = array();
+        foreach ( $new_vis as $nv ) {
+            $new_vis_idx[ $nv->hit_source ] = (int) $nv->new_visitors;
+        }
+
+        // Trend indexé par source
+        $trend_idx = array();
+        foreach ( $trend as $t ) {
+            $src = $t->hit_source;
+            if ( ! isset( $trend_idx[ $src ] ) ) $trend_idx[ $src ] = array();
+            $trend_idx[ $src ][] = array(
+                'period' => $t->period,
+                'hits'   => (int) $t->hits,
+            );
+        }
+
+        // Libellés et descriptions des sources
+        $source_meta = array(
+            'js'             => array(
+                'label'       => 'JavaScript',
+                'description' => 'Hits collectés par le tracker JS (mode cookieless ou cookie actif)',
+                'color'       => '#6c63ff',
+                'icon'        => 'js',
+            ),
+            'js_cookieless'  => array(
+                'label'       => 'JS sans cookie (fallback)',
+                'description' => 'Mode cookie configuré mais cookie bloqué (bloqueur de pub, Safari ITP…) → fallback cookieless automatique',
+                'color'       => '#a78bfa',
+                'icon'        => 'fallback',
+            ),
+            'pre_consent'    => array(
+                'label'       => 'Pré-consentement',
+                'description' => 'Hits cookieless envoyés avant que le visiteur réponde à la bannière. Les hits fusionnés (acceptation) sont marqués superseded.',
+                'color'       => '#f59e0b',
+                'icon'        => 'consent',
+            ),
+            'noscript'       => array(
+                'label'       => 'Pixel noscript',
+                'description' => 'Visiteurs sans JavaScript — collecte via pixel <img> 1×1 injecté dans <noscript>',
+                'color'       => '#10b981',
+                'icon'        => 'noscript',
+            ),
+            'cookie'         => array(
+                'label'       => 'Cookie',
+                'description' => 'Hits avec visitorId cookie actif et consentement accordé',
+                'color'       => '#3b82f6',
+                'icon'        => 'cookie',
+            ),
+        );
+
+        $sources = array();
+        foreach ( $rows as $row ) {
+            $src   = $row->hit_source ?: 'js'; // fallback si NULL
+            $hits  = (int) $row->hits;
+            $meta  = isset( $source_meta[ $src ] ) ? $source_meta[ $src ] : array(
+                'label' => $src, 'description' => '', 'color' => '#94a3b8', 'icon' => 'unknown',
+            );
+
+            $sources[] = array(
+                'source'           => $src,
+                'label'            => $meta['label'],
+                'description'      => $meta['description'],
+                'color'            => $meta['color'],
+                'icon'             => $meta['icon'],
+                'hits'             => $hits,
+                'unique_visitors'  => (int) $row->unique_visitors,
+                'sessions'         => (int) $row->sessions,
+                'superseded_count' => (int) $row->superseded_count,
+                'new_visitors'     => isset( $new_vis_idx[ $src ] ) ? $new_vis_idx[ $src ] : 0,
+                'pct_of_total'     => $total_hits > 0 ? round( $hits / $total_hits * 100, 1 ) : 0,
+                'trend'            => isset( $trend_idx[ $src ] ) ? $trend_idx[ $src ] : array(),
+            );
+        }
+
+        return rest_ensure_response( array(
+            'sources'       => $sources,
+            'total_hits'    => (int) ( $totals ? $totals->total_hits    : 0 ),
+            'total_uv'      => (int) ( $totals ? $totals->total_uv      : 0 ),
+            'total_sessions'=> (int) ( $totals ? $totals->total_sessions: 0 ),
+            'is_today'      => $is_today,
+        ) );
     }
 
     // ── Campaigns ─────────────────────────────────────────────────────────────

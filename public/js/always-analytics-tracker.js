@@ -172,7 +172,7 @@
         var data = {
             url:          window.location.href,
             title:        document.title,
-            referrer:     document.referrer || '',
+            referrer:     getEntryReferrer(),
             screenWidth:  screen.width,
             screenHeight: screen.height,
             sessionId:    getSessionId(),
@@ -363,6 +363,50 @@
             }).catch(function () {});
         } catch (e) {
             return Promise.resolve();
+        }
+    }
+
+    // ── Référent de session ───────────────────────────────────────────────────
+    //
+    // Problème : document.referrer n'est disponible que sur la première page vue.
+    // Pour les pages suivantes (navigation interne), il vaut l'URL de la page WP
+    // précédente — ce qui polluerait referrer_domain avec notre propre domaine.
+    //
+    // Solution :
+    //  1. Sur la page d'entrée (referrer externe ou vide), on stocke la valeur
+    //     dans sessionStorage sous la clé 'aa_entry_referrer'.
+    //  2. Sur toutes les pages suivantes, on renvoie ce referrer d'entrée persisté
+    //     au lieu de document.referrer.
+    //  3. Un referrer est considéré interne si son hostname correspond à celui
+    //     du site (config.siteUrl). Dans ce cas on stocke '' (direct).
+
+    var _REFERRER_KEY = 'aa_entry_referrer';
+
+    function _hostnameOf(url) {
+        if (!url) return '';
+        try { return new URL(url).hostname.replace(/^www\./, ''); } catch (e) { return ''; }
+    }
+
+    function getEntryReferrer() {
+        try {
+            var stored = sessionStorage.getItem(_REFERRER_KEY);
+            if (stored !== null) return stored; // peut être '' (direct)
+
+            var raw      = document.referrer || '';
+            var siteHost = _hostnameOf((config.siteUrl || window.location.origin));
+            var refHost  = _hostnameOf(raw);
+
+            // Referrer interne => on considere l'entree comme directe
+            var entry = (refHost && refHost === siteHost) ? '' : raw;
+            sessionStorage.setItem(_REFERRER_KEY, entry);
+            return entry;
+        } catch (e) {
+            // sessionStorage indisponible (navigation privee stricte) :
+            // fallback avec filtrage interne a la volee.
+            var raw      = document.referrer || '';
+            var siteHost = _hostnameOf((config.siteUrl || window.location.origin));
+            var refHost  = _hostnameOf(raw);
+            return (refHost && refHost === siteHost) ? '' : raw;
         }
     }
 

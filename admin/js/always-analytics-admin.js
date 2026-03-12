@@ -65,13 +65,6 @@
             });
         }
 
-        var devSel = document.getElementById('aa-device-filter');
-        if (devSel) {
-            devSel.addEventListener('change', function () {
-                state.device = this.value; loadAllData();
-            });
-        }
-
         document.querySelectorAll('.aa-toggle').forEach(function (btn) {
             btn.addEventListener('click', function () {
                 document.querySelectorAll('.aa-toggle').forEach(function (b) { b.classList.remove('active'); });
@@ -150,6 +143,7 @@
         loadReferrers();
         loadCountries();
         loadDevices();
+        loadHitSources();
         // Reload campaigns so annotations re-apply after chart is redrawn
         if (window.AlwaysAnalyticsCampaigns) {
             window.AlwaysAnalyticsCampaigns.loadCampaigns();
@@ -287,8 +281,8 @@
         if (!container) return;
 
         var rows = _refData.filter(function (r) {
+            var info = r._info || REF_DB.categorize(r.referrer_domain);
             if (_refCat === 'all') return true;
-            var info = REF_DB.categorize(r.referrer_domain);
             return info.cat === _refCat;
         });
 
@@ -300,7 +294,7 @@
         var maxHits = Math.max.apply(null, rows.map(function (r) { return +r.hits || 0; })) || 1;
 
         var rendered = rows.map(function (r) {
-            var info   = REF_DB.categorize(r.referrer_domain);
+            var info   = r._info || REF_DB.categorize(r.referrer_domain);
             var pct    = Math.round(((+r.hits || 0) / maxHits) * 100);
             var label  = esc(info.label);
             var domain = esc(r.referrer_domain || '—');
@@ -309,26 +303,38 @@
 
             var rawDomain = (r.referrer_domain || '').toLowerCase();
             var rawLabel  = info.label.toLowerCase();
-            var showDomain = info.cat !== 'site'
+            var showDomain = info.cat !== 'site' && info.cat !== 'direct'
+                && rawDomain !== ''
                 && rawDomain !== rawLabel
                 && rawLabel.indexOf(rawDomain.replace(/^www\./, '')) === -1;
 
             // Favicon Google S2 — asynchrone, non bloquant.
-            // En cas d'erreur, affiche un carré coloré avec l'initiale (fallback universel).
             var faviconDomain = encodeURIComponent(r.referrer_domain || info.label);
-            var faviconUrl    = 'https://www.google.com/s2/favicons?domain=' + faviconDomain + '&sz=32';
+            var faviconUrl    = r.referrer_domain
+                ? 'https://www.google.com/s2/favicons?domain=' + faviconDomain + '&sz=32'
+                : '';
             var initial       = (info.label || '?').charAt(0).toUpperCase();
-            var fallbackStyle = 'display:none;width:18px;height:18px;border-radius:3px;'
+            var fallbackStyle = 'width:18px;height:18px;border-radius:3px;'
                               + 'background:' + info.color + ';color:#fff;'
                               + 'font-size:11px;font-weight:700;line-height:18px;'
                               + 'text-align:center;flex-shrink:0;';
 
+            var iconHtml;
+            if (r.referrer_domain) {
+                iconHtml = '<img class="aa-ref-favicon" src="' + faviconUrl + '" width="18" height="18" alt="" loading="lazy" decoding="async"'
+                         + ' onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
+                         + '<span class="aa-ref-fallback" style="display:none;' + fallbackStyle + '">' + initial + '</span>';
+            } else {
+                // Direct : icône inline (pas de favicon)
+                iconHtml = '<span style="' + fallbackStyle + 'display:flex;align-items:center;justify-content:center;">'
+                         + '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M12 3l9 9-9 9"/></svg>'
+                         + '</span>';
+            }
+
             var html = '<div class="aa-ref-row">'
                 + '<div class="aa-ref-identity">'
                 +   '<span class="aa-ref-icon" style="background:' + info.color + '18;">'
-                +     '<img class="aa-ref-favicon" src="' + faviconUrl + '" width="18" height="18" alt="" loading="lazy" decoding="async"'
-                +         ' onerror="this.style.display=\'none\';this.nextSibling.style.display=\'flex\'">'
-                +     '<span class="aa-ref-fallback" style="' + fallbackStyle + '">' + initial + '</span>'
+                +     iconHtml
                 +   '</span>'
                 +   '<span class="aa-ref-labels">'
                 +     '<span class="aa-ref-name">' + label + '</span>'
@@ -352,13 +358,40 @@
 
     function loadReferrers() {
         apiFetch('top-referrers', 'limit=40', function (data) {
-            _refData = data || [];
+            var raw = data || [];
 
-            // Compteurs par catégorie
-            var counts = { all: 0, search: 0, social: 0, ai: 0, site: 0 };
+            // ── Fusion des sous-domaines search par label ─────────────────────
+            // ex: google.fr + google.com + fr.search.yahoo.com → un seul "Google"
+            var merged = {};
+            var order  = [];
+            raw.forEach(function (r) {
+                var info = REF_DB.categorize(r.referrer_domain);
+                // Clé de fusion : pour search, on regroupe par label ; sinon par domaine
+                var key = (info.cat === 'search') ? ('search:' + info.label) : (r.referrer_domain || '__direct__');
+                if (!merged[key]) {
+                    merged[key] = {
+                        referrer_domain: r.referrer_domain,
+                        hits:            0,
+                        unique_visitors: 0,
+                        _info:           info,
+                    };
+                    order.push(key);
+                }
+                merged[key].hits            += (+r.hits || 0);
+                merged[key].unique_visitors += (+r.unique_visitors || 0);
+            });
+            _refData = order.map(function (k) { return merged[k]; });
+
+            // Tri par hits desc
+            _refData.sort(function (a, b) {
+                return (+b.hits || 0) - (+a.hits || 0);
+            });
+
+            // ── Compteurs par catégorie ───────────────────────────────────────
+            var counts = { all: 0, search: 0, social: 0, ai: 0, site: 0, direct: 0 };
             _refData.forEach(function (r) {
                 counts.all++;
-                var cat = REF_DB.categorize(r.referrer_domain).cat;
+                var cat = r._info ? r._info.cat : REF_DB.categorize(r.referrer_domain).cat;
                 if (cat in counts) counts[cat]++;
                 else counts.site++;
             });
@@ -374,7 +407,6 @@
                 }
                 var n = counts[cat] || 0;
                 badge.textContent = n;
-                // Masquer le badge "0" sauf pour "Tous"
                 badge.style.display = (n === 0 && cat !== 'all') ? 'none' : '';
             });
 
@@ -1037,5 +1069,171 @@
 
         return { loadCampaigns: loadCampaigns, deleteCampaign: deleteCampaign };
     })();
+
+    // ── Sources de tracking ───────────────────────────────────────────────────
+
+    /**
+     * Charge et affiche la card "Sources de tracking" (hit_source).
+     * Sources : js / js_cookieless / pre_consent / noscript / cookie
+     * Données : hits, visiteurs uniques, sessions, nouveaux visiteurs,
+     *           % du total, hits fusionnés (pre_consent superseded), sparkline.
+     */
+    function loadHitSources() {
+        var tbody  = document.getElementById('aa-sources-tbody');
+        var bar    = document.getElementById('aa-sources-bar');
+        var legend = document.getElementById('aa-sources-bar-legend');
+        var badge  = document.getElementById('aa-sources-total-badge');
+        var info   = document.getElementById('aa-sources-info-text');
+
+        if (!tbody) return;
+
+        tbody.innerHTML = '<tr><td colspan="8" class="aa-loading-cell"><span class="aa-spinner"></span></td></tr>';
+        if (bar)    bar.innerHTML    = '';
+        if (legend) legend.innerHTML = '';
+        if (badge)  badge.textContent = '';
+
+        apiFetch('hit-sources', null, function (d) {
+            if (!d || !d.sources || !d.sources.length) {
+                tbody.innerHTML = '<tr><td colspan="8" class="aa-no-data">Aucune donnée pour cette période.</td></tr>';
+                return;
+            }
+
+            var sources   = d.sources;
+            var totalHits = d.total_hits || 1;
+
+            // ── Barre de répartition ─────────────────────────────────────────
+            if (bar) {
+                bar.innerHTML = '';
+                var barSorted = sources.slice().sort(function (a, b) { return b.hits - a.hits; });
+                barSorted.forEach(function (s) {
+                    var effective = s.hits - (s.source === 'pre_consent' ? s.superseded_count : 0);
+                    var pct = totalHits > 0 ? Math.max(0.5, effective / totalHits * 100) : 0;
+                    var seg = document.createElement('div');
+                    seg.className = 'aa-sources-bar-seg';
+                    seg.style.width      = pct + '%';
+                    seg.style.background = s.color;
+                    seg.title = s.label + ' — ' + fmt(effective) + ' hits (' + s.pct_of_total + '%)';
+                    bar.appendChild(seg);
+                });
+            }
+
+            // ── Légende ──────────────────────────────────────────────────────
+            if (legend) {
+                legend.innerHTML = '';
+                sources.forEach(function (s) {
+                    var el = document.createElement('span');
+                    el.className = 'aa-sources-legend-item';
+                    el.innerHTML =
+                        '<span class="aa-sources-dot" style="background:' + s.color + '"></span>' +
+                        '<span>' + escHtml(s.label) + '</span>';
+                    legend.appendChild(el);
+                });
+            }
+
+            // ── Badge total ──────────────────────────────────────────────────
+            if (badge) badge.textContent = fmt(totalHits) + ' hits total';
+
+            // ── Tableau ──────────────────────────────────────────────────────
+            tbody.innerHTML = '';
+            sources.forEach(function (s) {
+                var tr = document.createElement('tr');
+                tr.className = 'aa-sources-row';
+
+                var newVisPct = s.unique_visitors > 0
+                    ? Math.round(s.new_visitors / s.unique_visitors * 100) + '%'
+                    : '—';
+
+                var supersededCell = s.source === 'pre_consent'
+                    ? '<td class="aa-num">' +
+                          '<span class="aa-sources-fused-badge" title="Hits pre_consent marqués is_superseded=1 après acceptation bannière — exclus du comptage principal">' +
+                              fmt(s.superseded_count) +
+                          '</span>' +
+                      '</td>'
+                    : '<td class="aa-num aa-muted">—</td>';
+
+                tr.innerHTML =
+                    '<td class="aa-sources-label-cell">' +
+                        '<span class="aa-sources-icon" style="color:' + s.color + '">' + sourcesIcon(s.icon) + '</span>' +
+                        '<span class="aa-sources-name">' + escHtml(s.label) + '</span>' +
+                        '<span class="aa-sources-desc-icon" title="' + escAttr(s.description) + '">' +
+                            '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' +
+                        '</span>' +
+                    '</td>' +
+                    '<td class="aa-num"><strong>' + fmt(s.hits) + '</strong></td>' +
+                    '<td class="aa-num">' + fmt(s.unique_visitors) + '</td>' +
+                    '<td class="aa-num">' + fmt(s.sessions) + '</td>' +
+                    '<td class="aa-num">' +
+                        fmt(s.new_visitors) +
+                        '<span class="aa-sources-newvis-pct"> (' + newVisPct + ')</span>' +
+                    '</td>' +
+                    '<td class="aa-num">' +
+                        '<span class="aa-sources-pct-pill" style="--src-color:' + s.color + '">' + s.pct_of_total + '%</span>' +
+                    '</td>' +
+                    supersededCell +
+                    '<td class="aa-sources-spark">' + buildSparkline(s.trend, s.color) + '</td>';
+
+                tbody.appendChild(tr);
+            });
+
+            // ── Bloc info contextuel ─────────────────────────────────────────
+            if (info) {
+                var msgs = [];
+                var hasPreConsent = sources.some(function (s) { return s.source === 'pre_consent'; });
+                var hasNoscript   = sources.some(function (s) { return s.source === 'noscript'; });
+                var hasFallback   = sources.some(function (s) { return s.source === 'js_cookieless'; });
+                if (hasPreConsent) msgs.push('La bannière de consentement est active — les hits pré-consentement fusionnés (acceptation) sont exclus du comptage principal.');
+                if (hasNoscript)   msgs.push('Des visiteurs naviguent sans JavaScript (hits noscript).');
+                if (hasFallback)   msgs.push('Des cookies sont bloqués chez certains visiteurs → fallback cookieless automatique (hits "JS sans cookie").');
+                if (!msgs.length)  msgs.push('Mode cookieless standard actif — le tracker JS est la source exclusive de hits.');
+                info.textContent = msgs.join(' ');
+            }
+        });
+    }
+
+    // ── Helpers Sources ───────────────────────────────────────────────────────
+
+    function sourcesIcon(type) {
+        var icons = {
+            js:       '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
+            fallback: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+            consent:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>',
+            noscript: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>',
+            cookie:   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a10 10 0 1 0 10 10 4 4 0 0 1-5-5 4 4 0 0 1-5-5"/><path d="M8.5 8.5v.01"/><path d="M16 15.5v.01"/><path d="M12 12v.01"/></svg>',
+            unknown:  '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+        };
+        return icons[type] || icons.unknown;
+    }
+
+    function buildSparkline(trend, color) {
+        if (!trend || trend.length < 2) {
+            return '<span class="aa-muted" style="font-size:11px;">—</span>';
+        }
+        var W = 80, H = 28, pad = 2;
+        var values = trend.map(function (t) { return t.hits; });
+        var minV = Math.min.apply(null, values);
+        var maxV = Math.max.apply(null, values);
+        var range = maxV - minV || 1;
+        var n = values.length;
+        var pts = values.map(function (v, i) {
+            var x = pad + (i / (n - 1)) * (W - 2 * pad);
+            var y = H - pad - ((v - minV) / range) * (H - 2 * pad);
+            return x.toFixed(1) + ',' + y.toFixed(1);
+        });
+        var first = pts[0].split(',');
+        var last  = pts[pts.length - 1].split(',');
+        var area  = 'M' + first[0] + ',' + H + ' L' + pts.join(' L') + ' L' + last[0] + ',' + H + ' Z';
+        return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" class="aa-sparkline">' +
+            '<path d="' + area + '" fill="' + color + '" opacity="0.12"/>' +
+            '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + color + '" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+            '<circle cx="' + last[0] + '" cy="' + last[1] + '" r="2" fill="' + color + '"/>' +
+        '</svg>';
+    }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function escAttr(s) {
+        return String(s).replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
 
 })();
