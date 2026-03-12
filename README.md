@@ -5,7 +5,7 @@
 # Always Analytics
 ### La solution d'analytics WordPress auto-hébergée qui capture 100% de vos visites et respecte la confidentialité de vos visiteurs.
 
-[![Version](https://img.shields.io/badge/version-2.4.0-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
+[![Version](https://img.shields.io/badge/version-2.5.0-1db954?style=flat-square)](https://github.com/votre-pseudo/statify/releases)
 [![WordPress](https://img.shields.io/badge/WordPress-5.8%2B-21759b?style=flat-square&logo=wordpress)](https://wordpress.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4%2B-777bb4?style=flat-square&logo=php)](https://php.net)
 [![Privacy](https://img.shields.io/badge/RGPD-conforme-1db954?style=flat-square)](#-la-révolution-privacy-first)
@@ -18,6 +18,7 @@
 - **100% Souverain** : Vos données restent chez vous, sur votre serveur.
 - **Vitesse Éclair** : Script ultra-léger sans impact sur le SEO.
 - **Conformité RGPD Native** : Anonymisation et respect de la vie privée par design.
+
 
 La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
 
