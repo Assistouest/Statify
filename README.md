@@ -24,6 +24,9 @@
 
 La plupart des outils d'analytics affichent des classements basés sur des moyennes brutes. La moyenne brute est mathématiquement imprécise. Elle ne tient pas compte de la taille de l'échantillon. Sans correction, votre dashboard est pollué par des mirages statistiques : une page consultée une seule fois pendant 10 minutes sera classée au-dessus de votre guide pilier lu par 5 000 personnes, et inversement.
 
+![Score de Wilson](assets/screenshots/screenshot-2.png)
+
+
 Pour éviter l'anomalie des petits nombres, nous appliquons la limite inférieure de l'intervalle de confiance de Wilson dans les statistiques d'engagement.
 
 | Page | Sessions | Engag. Brut | Score Wilson | État |
