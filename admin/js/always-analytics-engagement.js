@@ -106,7 +106,8 @@
 		function apiFetch( endpoint, extra, cb ) {
 			var qs = 'from=' + enc( state.from ) + '&to=' + enc( state.to ) + '&_t=' + Date.now();
 			if ( extra ) { qs += '&' + extra; }
-			fetch( API + endpoint + '?' + qs, {
+			var sep = API.indexOf('?') !== -1 ? '&' : '?';
+			fetch( API + endpoint + sep + qs, {
 				cache: 'no-store',
 				headers: {
 					'X-WP-Nonce':     NONCE,

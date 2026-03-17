@@ -3,7 +3,7 @@
  * Plugin Name:       Always Analytics
  * Plugin URI:        https://assistouest.fr/always-analytics-wordpress/
  * Description:       Statistiques avancées auto-hébergées, légères et respectueuses de la vie privée pour WordPress.
- * Version:           2.6.1
+ * Version:           2.6.2
  * Author:            Adrien
  * Author URI:        https://assistouest.fr
  * License:           GPL-2.0+
@@ -24,7 +24,7 @@ if (!defined('ABSPATH')) {
 }
 
 // Plugin constants
-define('AA_VERSION', '2.6.1');
+define('AA_VERSION', '2.6.2');
 define('AA_PLUGIN_FILE', __FILE__);
 define('AA_PLUGIN_DIR', plugin_dir_path(__FILE__));
 define('AA_PLUGIN_URL', plugin_dir_url(__FILE__));

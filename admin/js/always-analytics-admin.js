@@ -105,7 +105,8 @@
         if (state.country)  qs += '&country='    + enc(state.country);
         if (params)         qs += '&' + params;
 
-        fetch(API_BASE + endpoint + '?' + qs, {
+        var sep = API_BASE.indexOf('?') !== -1 ? '&' : '?';
+        fetch(API_BASE + endpoint + sep + qs, {
             method:  'GET',
             cache:   'no-store',          // instruction navigateur : jamais de cache
             headers: {
